@@ -5,6 +5,7 @@ import com.langly.app.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Data;
 import com.langly.app.course.entity.enums.SchoolStatus;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "schools")
+@NoArgsConstructor
 public class School {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
