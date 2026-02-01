@@ -1,10 +1,10 @@
 package com.langly.app.user.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
-@Data
-
+@Getter
+@Setter
 @Entity
 @Table(name = "roles")
 public class Role {
