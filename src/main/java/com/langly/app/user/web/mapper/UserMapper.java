@@ -1,0 +1,17 @@
+package com.langly.app.user.web.mapper;
+
+import com.langly.app.user.entity.User;
+import com.langly.app.user.web.dto.request.UserRequest;
+import com.langly.app.user.web.dto.response.UserResponse;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+public interface UserMapper {
+
+    @Mapping(target = "schoolId", source = "school.id")
+    UserResponse toResponse(User user);
+
+    User toEntity(UserRequest request);
+}
