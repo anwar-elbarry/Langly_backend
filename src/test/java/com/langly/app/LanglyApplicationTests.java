@@ -1,4 +1,4 @@
-package org.example.langly;
+package com.langly.app;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
