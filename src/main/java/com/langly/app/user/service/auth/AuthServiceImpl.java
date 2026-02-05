@@ -39,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
                             request.password()
                     )
             );
-        } catch (org.springframework.security.core.AuthenticationException e) {
+        } catch (AuthenticationException e) {
             throw new AuthenticationException("Invalid username or password");
         }
 
