@@ -2,6 +2,7 @@ package com.langly.app.user.controller.user;
 
 import com.langly.app.user.service.user.UserService;
 import com.langly.app.user.web.dto.request.UserRequest;
+import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -106,7 +107,7 @@ public class UserControllerImpl implements UserController {
     })
     @PutMapping("/{id}")
     @Override
-    public ResponseEntity<UserResponse> update(@PathVariable String id, @Valid @RequestBody UserRequest request) {
+    public ResponseEntity<UserResponse> update(@PathVariable String id, @Valid @RequestBody UserUpdateRequest request) {
         UserResponse response = userService.update(id, request);
         return ResponseEntity.ok(response);
     }

@@ -1,6 +1,7 @@
 package com.langly.app.user.controller.user;
 
 import com.langly.app.user.web.dto.request.UserRequest;
+import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +22,7 @@ public interface UserController {
 
     ResponseEntity<List<UserResponse>> getAllByRole(String roleName);
 
-    ResponseEntity<UserResponse> update(String id, UserRequest request);
+    ResponseEntity<UserResponse> update(String id, UserUpdateRequest request);
 
     ResponseEntity<Void> delete(String id);
 
