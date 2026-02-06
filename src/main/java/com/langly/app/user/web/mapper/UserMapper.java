@@ -2,6 +2,7 @@ package com.langly.app.user.web.mapper;
 
 import com.langly.app.user.entity.User;
 import com.langly.app.user.web.dto.request.UserRequest;
+import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,5 +14,8 @@ public interface UserMapper {
     @Mapping(target = "schoolId", source = "school.id")
     UserResponse toResponse(User user);
 
+    @Mapping(target = "role.name",source = "roleName")
     User toEntity(UserRequest request);
+
+    User toUpdateEntity(UserUpdateRequest request);
 }
