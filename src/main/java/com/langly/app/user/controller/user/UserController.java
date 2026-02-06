@@ -1,0 +1,31 @@
+package com.langly.app.user.controller.user;
+
+import com.langly.app.user.web.dto.request.UserRequest;
+import com.langly.app.user.web.dto.response.UserResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+
+import java.util.List;
+
+public interface UserController {
+    ResponseEntity<UserResponse> create(UserRequest request);
+
+    ResponseEntity<UserResponse> getById(String id);
+
+    ResponseEntity<UserResponse> getByEmail(String email);
+
+    ResponseEntity<Page<UserResponse>> getAll(Pageable pageable);
+
+    ResponseEntity<List<UserResponse>> getAllBySchoolId(String schoolId);
+
+    ResponseEntity<List<UserResponse>> getAllByRole(String roleName);
+
+    ResponseEntity<UserResponse> update(String id, UserRequest request);
+
+    ResponseEntity<Void> delete(String id);
+
+    ResponseEntity<Void> activate(String id);
+
+    ResponseEntity<Void> suspend(String id);
+}
