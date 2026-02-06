@@ -1,6 +1,6 @@
 package com.langly.app.user.web.dto.response;
 
-import com.langly.app.user.entity.Role;
+import com.langly.app.Authority.entity.Role;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
