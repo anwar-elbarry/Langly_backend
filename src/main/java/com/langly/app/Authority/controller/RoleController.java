@@ -1,8 +1,8 @@
-package com.langly.app.role.controller;
+package com.langly.app.Authority.controller;
 
-import com.langly.app.role.service.RoleService;
-import com.langly.app.role.web.dto.request.RoleRequest;
-import com.langly.app.role.web.dto.response.RoleResponse;
+import com.langly.app.Authority.service.role.RoleService;
+import com.langly.app.Authority.web.dto.request.RoleRequest;
+import com.langly.app.Authority.web.dto.response.RoleResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
-//@PreAuthorize("hasRole('SUPER_ADMIN')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class RoleController {
 
     private final RoleService roleService;
@@ -56,5 +56,21 @@ public class RoleController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         roleService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{roleId}/permissions")
+    public ResponseEntity<RoleResponse> assignPermissions(
+            @PathVariable String roleId,
+            @RequestBody List<String> permissionIds) {
+        RoleResponse response = roleService.assignPermissions(roleId, permissionIds);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{roleId}/permissions")
+    public ResponseEntity<RoleResponse> takePermissions(
+            @PathVariable String roleId,
+            @RequestBody List<String> permissionIds) {
+        RoleResponse response = roleService.takePermission(roleId, permissionIds);
+        return ResponseEntity.ok(response);
     }
 }
