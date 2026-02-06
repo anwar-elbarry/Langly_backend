@@ -1,6 +1,6 @@
 package com.langly.app.user.repository;
 
-import com.langly.app.user.entity.Role;
+import com.langly.app.Authority.entity.Role;
 import com.langly.app.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
