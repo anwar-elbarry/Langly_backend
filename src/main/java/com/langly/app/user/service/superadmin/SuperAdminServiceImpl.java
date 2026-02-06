@@ -1,7 +1,7 @@
 package com.langly.app.user.service.superadmin;
 
 import com.langly.app.exception.UserNotFoundException;
-import com.langly.app.user.entity.Role;
+import com.langly.app.Authority.entity.Role;
 import com.langly.app.user.entity.User;
 import com.langly.app.user.enums.UserRole;
 import com.langly.app.user.enums.UserStatus;
