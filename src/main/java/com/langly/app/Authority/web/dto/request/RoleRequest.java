@@ -1,4 +1,4 @@
-package com.langly.app.role.web.dto.request;
+package com.langly.app.Authority.web.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
