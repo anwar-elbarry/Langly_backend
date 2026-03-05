@@ -34,3 +34,5 @@ resend:
 
 app:
   base-url: ${APP_BASE_URL}
+  mail:
+    enabled: false   # set to true in production with a verified Resend domain
