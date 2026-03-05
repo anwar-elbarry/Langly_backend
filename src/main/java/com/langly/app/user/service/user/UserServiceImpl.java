@@ -1,6 +1,7 @@
 package com.langly.app.user.service.user;
 
 import com.langly.app.Authority.entity.Role;
+import com.langly.app.email.EmailPreview;
 import com.langly.app.email.EmailService;
 import com.langly.app.exception.AlreadyExistsException;
 import com.langly.app.exception.ResourceNotFoundException;
@@ -65,8 +66,8 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-        // Envoyer l'email d'invitation
-        emailService.sendInvitationEmail(
+        // V2 — envoie l'email ou retourne un aperçu en dev (app.mail.enabled=false)
+        EmailPreview emailPreview = emailService.sendInvitationEmailWithPreview(
                 user.getEmail(),
                 user.getFirstName() + " " + user.getLastName(),
                 role.getName(),
@@ -75,7 +76,9 @@ public class UserServiceImpl implements UserService {
                 school.getName()
         );
 
-        return userMapper.toResponse(savedUser);
+        UserResponse response = userMapper.toResponse(savedUser);
+        response.setEmailPreview(emailPreview); // null en production, rempli en dev
+        return response;
     }
 
     @Override
