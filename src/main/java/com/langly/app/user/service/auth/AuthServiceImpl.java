@@ -35,16 +35,16 @@ public class AuthServiceImpl implements AuthService {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            request.username(),
+                            request.email(),
                             request.password()
                     )
             );
         } catch (AuthenticationException e) {
-            throw new AuthenticationException("Invalid username or password");
+            throw new AuthenticationException("Invalid email or password");
         }
 
-        User user = userRepository.findByEmail(request.username())
-                .orElseThrow(() -> new UserNotFoundException("this email: " +request.username()));
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new UserNotFoundException("this email: " +request.email()));
 
         UserResponse userRespDTO = userMapper.toResponse(user);
         Map<String, String> tokens = generateTokens(user);
