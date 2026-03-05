@@ -1,6 +1,6 @@
 package com.langly.app.user.web.dto.response;
 
-import com.langly.app.Authority.entity.Role;
+import com.langly.app.Authority.web.dto.response.RoleResponse;
 import com.langly.app.email.EmailPreview;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,19 +12,12 @@ import lombok.Setter;
 public class UserResponse {
 
     private String id;
-
     private String firstName;
-
     private String lastName;
-
     private String email;
-
     private String phoneNumber;
-
     private String profile;
-
-    private Role role;
-
+    private RoleResponse role;
     private String schoolId;
 
     // Only populated in dev mode (app.mail.enabled=false) — null in production
