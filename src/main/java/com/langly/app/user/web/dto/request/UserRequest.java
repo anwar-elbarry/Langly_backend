@@ -10,7 +10,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Builder
 public class UserRequest {
 
     @Size(max = 25)
@@ -32,7 +31,7 @@ public class UserRequest {
     private String profile;
 
     @NotNull
-    private String roleId;
+    private String roleName;
 
     @NotNull
     private String schoolId;

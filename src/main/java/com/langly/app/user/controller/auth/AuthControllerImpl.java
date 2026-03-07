@@ -36,7 +36,7 @@ public class AuthControllerImpl  implements AuthController{
         @Operation(summary = "Déconnexion utilisateur")
         @ApiResponses(value = {
                 @ApiResponse(responseCode = "204", description = "Déconnexion réussie"),
-                @ApiResponse(responseCode = "401", description = "Token invalide")
+@ApiResponse(responseCode = "401", description = "Token invalide")
         })
         @PostMapping("/logout")
         @Override

@@ -44,7 +44,7 @@ public class SecurityConfig {
 
                         // règles métier
                         .requestMatchers(
-                                "/api/auth/login",
+                                "/api/v1/auth/login",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html").permitAll()
@@ -76,7 +76,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(List.of(
-                "https://app.smartdelivery.com",
+                "https://app.langly.com",
                 "http://localhost:4200"
         ));
 

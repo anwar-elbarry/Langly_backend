@@ -1,8 +1,6 @@
 package com.langly.app.student.entity;
 
-import com.langly.app.course.entity.Attendance;
 import com.langly.app.finance.entity.Billing;
-import com.langly.app.course.entity.Enrollment;
 import com.langly.app.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

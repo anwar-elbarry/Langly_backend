@@ -1,5 +1,6 @@
 package com.langly.app.user.entity;
 
+import com.langly.app.Authority.entity.Role;
 import com.langly.app.school.entity.School;
 import com.langly.app.user.enums.UserStatus;
 import jakarta.persistence.*;
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Getter
@@ -49,6 +51,14 @@ public class User implements UserDetails {
         Set<GrantedAuthority> authorities = new HashSet<>();
         if (this.role != null) {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + this.role.getName()));
+
+            if (getRole().getPermissions() != null) {
+                authorities.addAll(
+                        getRole().getPermissions().stream()
+                                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                                .collect(Collectors.toSet())
+                );
+            }
         }
         return authorities;
     }
