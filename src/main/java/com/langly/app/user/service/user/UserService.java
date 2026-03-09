@@ -1,5 +1,6 @@
 package com.langly.app.user.service.user;
 
+import com.langly.app.user.web.dto.request.UpdatePasswordRequest;
 import com.langly.app.user.web.dto.request.UserRequest;
 import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
@@ -29,4 +30,6 @@ public interface UserService {
     void activate(String id);
 
     void suspend(String id);
+
+    void updatePassword(String id, UpdatePasswordRequest request);
 }
