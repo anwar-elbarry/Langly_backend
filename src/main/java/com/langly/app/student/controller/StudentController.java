@@ -1,12 +1,17 @@
 package com.langly.app.student.controller;
 
 import com.langly.app.student.service.StudentService;
+import com.langly.app.student.web.dto.AdminStudentUpdateRequest;
 import com.langly.app.student.web.dto.StudentResponse;
+import com.langly.app.student.web.dto.StudentUpdateRequest;
+import com.langly.app.user.entity.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,11 +24,36 @@ public class StudentController {
 
     private final StudentService studentService;
 
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "Get current student's profile")
+    public ResponseEntity<StudentResponse> getMyProfile(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(studentService.getByUserId(user.getId()));
+    }
+
+    @PatchMapping("/me")
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "Student updates own profile (CNIE, birthDate)")
+    public ResponseEntity<StudentResponse> updateMyProfile(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody StudentUpdateRequest request) {
+        return ResponseEntity.ok(studentService.updateByStudent(user.getId(), request));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('SCHOOL_ADMIN','TEACHER')")
     @Operation(summary = "Detail d'un etudiant")
     public ResponseEntity<StudentResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(studentService.getById(id));
+    }
+
+    @PatchMapping("/{id}/admin")
+    @PreAuthorize("hasRole('SCHOOL_ADMIN')")
+    @Operation(summary = "Admin updates student level and gender")
+    public ResponseEntity<StudentResponse> updateByAdmin(
+            @PathVariable String id,
+            @Valid @RequestBody AdminStudentUpdateRequest request) {
+        return ResponseEntity.ok(studentService.updateByAdmin(id, request));
     }
 
     @GetMapping("/school/{schoolId}")
