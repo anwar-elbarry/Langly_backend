@@ -1,5 +1,6 @@
 package com.langly.app.course.service;
 
+import com.langly.app.course.entity.enums.EnrollmentStatus;
 import com.langly.app.course.web.dto.EnrollmentRequest;
 import com.langly.app.course.web.dto.EnrollmentResponse;
 
@@ -16,4 +17,10 @@ public interface EnrollmentService {
     List<EnrollmentResponse> getAllByCourseId(String courseId);
 
     List<EnrollmentResponse> getAllBySchoolId(String schoolId);
+
+    /**
+     * US07 : Met à jour le statut d'une inscription. Si PASSED → génère un
+     * certificat.
+     */
+    EnrollmentResponse updateStatus(String enrollmentId, EnrollmentStatus status);
 }
