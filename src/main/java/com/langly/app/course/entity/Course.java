@@ -25,7 +25,9 @@ public class Course {
     @Column(unique = true)
     private String code;
     private String language;
+    @Enumerated(EnumType.STRING)
     private Level requiredLevel;
+    @Enumerated(EnumType.STRING)
     private Level targetLevel;
     private LocalDate startDate;
     private LocalDate endDate;
