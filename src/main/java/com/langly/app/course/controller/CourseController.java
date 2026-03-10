@@ -37,7 +37,7 @@ public class CourseController {
     }
 
     @GetMapping("/school/{schoolId}")
-    @PreAuthorize("hasAnyRole('SCHOOL_ADMIN','TEACHER')")
+    @PreAuthorize("hasAnyRole('SCHOOL_ADMIN','TEACHER','STUDENT')")
     @Operation(summary = "Lister les cours d'une ecole")
     public ResponseEntity<List<CourseResponse>> getAllBySchoolId(@PathVariable String schoolId) {
         return ResponseEntity.ok(courseService.getAllBySchoolId(schoolId));

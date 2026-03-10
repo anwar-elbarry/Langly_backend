@@ -2,9 +2,13 @@ package com.langly.app.course.service;
 
 import com.langly.app.course.entity.Course;
 import com.langly.app.course.repository.CourseRepository;
+import com.langly.app.course.repository.SessionRepository;
+import com.langly.app.course.web.dto.ActiveCourseResponse;
 import com.langly.app.course.web.dto.CourseRequest;
 import com.langly.app.course.web.dto.CourseResponse;
+import com.langly.app.course.web.dto.SessionResponse;
 import com.langly.app.course.web.mapper.CourseMapper;
+import com.langly.app.course.web.mapper.SessionMapper;
 import com.langly.app.exception.AlreadyExistsException;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.user.entity.User;
@@ -13,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -23,6 +28,8 @@ public class CourseServiceImpl implements CourseService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
     private final CourseMapper courseMapper;
+    private final SessionRepository sessionRepository;
+    private final SessionMapper sessionMapper;
 
     @Override
     @Transactional
@@ -100,5 +107,42 @@ public class CourseServiceImpl implements CourseService {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Course", id));
         courseRepository.delete(course);
+    }
+
+    @Override
+    public List<ActiveCourseResponse> getActiveCoursesForStudent(String studentId) {
+        List<Course> activeCourses = courseRepository.findActiveByStudentId(studentId);
+
+        return activeCourses.stream().map(course -> {
+            ActiveCourseResponse response = new ActiveCourseResponse();
+            response.setId(course.getId());
+            response.setName(course.getName());
+            response.setCode(course.getCode());
+            response.setLanguage(course.getLanguage());
+            response.setRequiredLevel(course.getRequiredLevel() != null ? course.getRequiredLevel().name() : null);
+            response.setTargetLevel(course.getTargetLevel() != null ? course.getTargetLevel().name() : null);
+            response.setPrice(course.getPrice());
+            response.setIsActive(course.getIsActive());
+
+            if (course.getTeacher() != null) {
+                response.setTeacherFullName(course.getTeacher().getFirstName() + " " + course.getTeacher().getLastName());
+            }
+
+            // Prochaines sessions à venir
+            List<SessionResponse> upcoming = sessionRepository
+                    .findAllByCourseIdAndScheduledAtAfterOrderByScheduledAtAsc(course.getId(), LocalDateTime.now())
+                    .stream().map(sessionMapper::toResponse).toList();
+            response.setUpcomingSessions(upcoming);
+
+            return response;
+        }).toList();
+    }
+
+    @Override
+    public List<CourseResponse> getAllByTeacherId(String teacherId) {
+        return courseRepository.findAllByTeacherId(teacherId)
+                .stream()
+                .map(courseMapper::toResponse)
+                .toList();
     }
 }

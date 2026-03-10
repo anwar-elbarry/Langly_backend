@@ -157,6 +157,20 @@
             <artifactId>resend-java</artifactId>
             <version>LATEST</version>
         </dependency>
+
+        <!-- Stripe SDK for US04 (Student Enrollment with Payment) -->
+        <dependency>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>28.3.0</version>
+        </dependency>
+
+        <!-- Apache PDFBox for US07 (PDF Certificate Generation) -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.4</version>
+        </dependency>
     </dependencies>
 
     <build>

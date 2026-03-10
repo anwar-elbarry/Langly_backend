@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.langly.app.course.entity.enums.AttendanceStatus;
 
+import java.time.LocalDateTime;
+
 @Data
 @Entity
 @NoArgsConstructor
@@ -16,7 +18,9 @@ public class Attendance {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private String markedAt;
+    private LocalDateTime markedAt;
+
+    @Enumerated(EnumType.ORDINAL)
     private AttendanceStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
