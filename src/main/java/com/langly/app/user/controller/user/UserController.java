@@ -1,5 +1,6 @@
 package com.langly.app.user.controller.user;
 
+import com.langly.app.user.web.dto.request.UpdatePasswordRequest;
 import com.langly.app.user.web.dto.request.UserRequest;
 import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
@@ -29,4 +30,6 @@ public interface UserController {
     ResponseEntity<Void> activate(String id);
 
     ResponseEntity<Void> suspend(String id);
+
+    ResponseEntity<Void> updatePassword(String id, UpdatePasswordRequest request);
 }

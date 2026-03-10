@@ -7,10 +7,13 @@ import com.langly.app.exception.AlreadyExistsException;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.school.entity.School;
 import com.langly.app.school.repository.SchoolRepository;
+import com.langly.app.student.entity.Student;
+import com.langly.app.student.repository.StudentRepository;
 import com.langly.app.user.entity.User;
 import com.langly.app.user.enums.UserStatus;
 import com.langly.app.user.repository.RoleRepository;
 import com.langly.app.user.repository.UserRepository;
+import com.langly.app.user.web.dto.request.UpdatePasswordRequest;
 import com.langly.app.user.web.dto.request.UserRequest;
 import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
@@ -34,6 +37,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final SchoolRepository schoolRepository;
+    private final StudentRepository studentRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
@@ -65,6 +69,13 @@ public class UserServiceImpl implements UserService {
         user.setStatus(UserStatus.ACTIVE);
 
         User savedUser = userRepository.save(user);
+
+        // Si le rôle est STUDENT, créer automatiquement le profil étudiant
+        if ("STUDENT".equalsIgnoreCase(role.getName())) {
+            Student student = new Student();
+            student.setUser(savedUser);
+            studentRepository.save(student);
+        }
 
         // V2 — envoie l'email ou retourne un aperçu en dev (app.mail.enabled=false)
         EmailPreview emailPreview = emailService.sendInvitationEmailWithPreview(
@@ -145,6 +156,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(request.getEmail());
         user.setPhoneNumber(request.getPhoneNumber());
         user.setProfile(request.getProfile());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         User updatedUser = userRepository.save(user);
         return userMapper.toResponse(updatedUser);
@@ -170,6 +182,26 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
         user.setStatus(UserStatus.SUSPENDED);
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updatePassword(String id, UpdatePasswordRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        // Vérifier que le mot de passe actuel est correct
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Le mot de passe actuel est incorrect");
+        }
+
+        // Vérifier que le nouveau mot de passe et la confirmation correspondent
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("Le nouveau mot de passe et la confirmation ne correspondent pas");
+        }
+
+        // Mettre à jour le mot de passe
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
     }
 

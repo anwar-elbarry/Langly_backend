@@ -1,6 +1,7 @@
 package com.langly.app.user.controller.user;
 
 import com.langly.app.user.service.user.UserService;
+import com.langly.app.user.web.dto.request.UpdatePasswordRequest;
 import com.langly.app.user.web.dto.request.UserRequest;
 import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
@@ -145,6 +146,19 @@ public class UserControllerImpl implements UserController {
     @Override
     public ResponseEntity<Void> suspend(@PathVariable String id) {
         userService.suspend(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Update password", description = "Updates the password of an existing user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request or current password is incorrect"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @PatchMapping("/{id}/password")
+    @Override
+    public ResponseEntity<Void> updatePassword(@PathVariable String id, @Valid @RequestBody UpdatePasswordRequest request) {
+        userService.updatePassword(id, request);
         return ResponseEntity.ok().build();
     }
 }
