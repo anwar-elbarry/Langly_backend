@@ -38,6 +38,9 @@ public class Course {
     @OneToMany(mappedBy = "course",cascade = CascadeType.ALL ,orphanRemoval = true)
     private List<Enrollment> enrollments = new ArrayList<>();
 
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Session> sessions = new ArrayList<>();
+
     @ManyToOne
     @JoinColumn(name = "teacher_id")
     private User teacher;
