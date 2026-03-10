@@ -36,3 +36,10 @@ app:
   base-url: ${APP_BASE_URL}
   mail:
     enabled: false   # set to true in production with a verified Resend domain
+
+stripe:
+  api-key: ${STRIPE_API_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+
+file:
+  upload-dir: ${UPLOAD_DIR:./uploads}
