@@ -11,5 +11,8 @@ public interface BillingMapper {
     @Mapping(target = "paymentMethod",   expression = "java(billing.getPaymentMethod() != null ? billing.getPaymentMethod().name() : null)")
     @Mapping(target = "studentId",       source = "student.id")
     @Mapping(target = "studentFullName", expression = "java(billing.getStudent() != null && billing.getStudent().getUser() != null ? billing.getStudent().getUser().getFirstName() + \" \" + billing.getStudent().getUser().getLastName() : null)")
+    @Mapping(target = "enrollmentId",    source = "enrollment.id")
+    @Mapping(target = "courseId",         expression = "java(billing.getEnrollment() != null && billing.getEnrollment().getCourse() != null ? billing.getEnrollment().getCourse().getId() : null)")
+    @Mapping(target = "courseName",      expression = "java(billing.getEnrollment() != null && billing.getEnrollment().getCourse() != null ? billing.getEnrollment().getCourse().getName() : null)")
     BillingResponse toResponse(Billing billing);
 }
