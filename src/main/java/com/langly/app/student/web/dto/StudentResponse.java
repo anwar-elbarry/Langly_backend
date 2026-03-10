@@ -18,5 +18,6 @@ public class StudentResponse {
     private LocalDate birthDate;
     private String cnie;
     private String level;
+    private String gender;
     private List<String> missingFields;
 }
