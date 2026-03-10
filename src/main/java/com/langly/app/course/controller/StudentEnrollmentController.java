@@ -1,110 +1,67 @@
 package com.langly.app.course.controller;
 
-import com.langly.app.course.entity.Course;
-import com.langly.app.course.entity.Enrollment;
-import com.langly.app.course.entity.enums.EnrollmentStatus;
-import com.langly.app.course.repository.CourseRepository;
-import com.langly.app.course.repository.EnrollmentRepository;
-import com.langly.app.course.web.dto.CheckoutRequest;
-import com.langly.app.course.web.dto.CheckoutResponse;
-import com.langly.app.exception.AlreadyExistsException;
+import com.langly.app.course.service.EnrollmentService;
+import com.langly.app.course.web.dto.EnrollmentResponse;
+import com.langly.app.course.web.dto.StudentEnrollmentRequest;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.finance.entity.Billing;
-import com.langly.app.finance.entity.enums.PaymentStatus;
 import com.langly.app.finance.repository.BillingRepository;
-import com.langly.app.finance.service.StripeService;
 import com.langly.app.student.entity.Student;
 import com.langly.app.student.repository.StudentRepository;
 import com.langly.app.user.entity.User;
-import com.stripe.model.checkout.Session;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.util.List;
 
 /**
- * US04 : L'étudiant s'inscrit à un cours et paie via Stripe.
+ * Student-facing enrollment endpoints.
+ * Students request enrollment → admin approves → student pays.
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/student/enrollments")
 @RequiredArgsConstructor
-@Tag(name = "Student — Enrollments", description = "US04 : Inscription étudiant avec paiement Stripe")
+@Tag(name = "Student — Enrollments", description = "Demandes d'inscription étudiant")
 public class StudentEnrollmentController {
 
     private final StudentRepository studentRepository;
-    private final CourseRepository courseRepository;
-    private final EnrollmentRepository enrollmentRepository;
+    private final EnrollmentService enrollmentService;
     private final BillingRepository billingRepository;
-    private final StripeService stripeService;
 
-    @PostMapping("/checkout")
+    @PostMapping("/request")
     @PreAuthorize("hasRole('STUDENT')")
-    @Transactional
-    @Operation(summary = "Initier le paiement Stripe", description = "Crée une inscription PENDING + Billing PENDING, puis retourne l'URL de Stripe Checkout")
-    public ResponseEntity<CheckoutResponse> checkout(
+    @Operation(summary = "Demander une inscription à un cours",
+            description = "Crée une inscription avec statut PENDING_APPROVAL. L'admin doit approuver avant le paiement.")
+    public ResponseEntity<EnrollmentResponse> requestEnrollment(
             @AuthenticationPrincipal User user,
-            @Valid @RequestBody CheckoutRequest request) {
+            @Valid @RequestBody StudentEnrollmentRequest request) {
 
         Student student = studentRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "userId=" + user.getId()));
 
-        Course course = courseRepository.findById(request.getCourseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(enrollmentService.requestEnrollment(student.getId(), request.getCourseId()));
+    }
 
-        // Vérifier doublon
-        if (enrollmentRepository.existsByStudentIdAndCourseId(student.getId(), course.getId())) {
-            throw new AlreadyExistsException("Vous êtes déjà inscrit à ce cours");
-        }
+    @GetMapping
+    @PreAuthorize("hasRole('STUDENT')")
+    @Operation(summary = "Mes inscriptions", description = "Retourne toutes les inscriptions de l'étudiant connecté")
+    public ResponseEntity<List<EnrollmentResponse>> getMyEnrollments(
+            @AuthenticationPrincipal User user) {
 
-        // Vérifier capacité
-        long currentCount = enrollmentRepository.findAllByCourseId(course.getId()).size();
-        if (course.getCapacity() != null && currentCount >= course.getCapacity()) {
-            throw new IllegalStateException("Le cours a atteint sa capacité maximale");
-        }
+        Student student = studentRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Student", "userId=" + user.getId()));
 
-        // Mettre à jour le niveau
-        student.setLevel(request.getLevel());
-        studentRepository.save(student);
-
-        // Créer l'inscription
-        Enrollment enrollment = new Enrollment();
-        enrollment.setStudent(student);
-        enrollment.setCourse(course);
-        enrollment.setStatus(EnrollmentStatus.IN_PROGRESS);
-        enrollment.setEnrolledAt(LocalDate.now());
-        enrollment.setCertificateIssued(false);
-        enrollment = enrollmentRepository.save(enrollment);
-
-        // Créer le billing PENDING
-        Billing billing = new Billing();
-        billing.setPrice(course.getPrice());
-        billing.setStatus(PaymentStatus.PENDING);
-        billing.setStudent(student);
-        billing.setEnrollment(enrollment);
-        billing = billingRepository.save(billing);
-
-        // Créer la session Stripe
-        try {
-            Session checkoutSession = stripeService.createCheckoutSession(course, billing);
-
-            // Sauvegarder les IDs Stripe
-            billing.setStripeCheckoutSessionId(checkoutSession.getId());
-            billingRepository.save(billing);
-
-            return ResponseEntity.ok(new CheckoutResponse(checkoutSession.getUrl(), billing.getId()));
-        } catch (Exception e) {
-            log.error("Erreur lors de la création de la session Stripe", e);
-            throw new RuntimeException("Impossible de créer la session de paiement : " + e.getMessage());
-        }
+        return ResponseEntity.ok(enrollmentService.getAllByStudentId(student.getId()));
     }
 
     @GetMapping("/{billingId}/invoice")
@@ -117,7 +74,6 @@ public class StudentEnrollmentController {
         Billing billing = billingRepository.findById(billingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Billing", billingId));
 
-        // Vérifier que le billing appartient bien à cet étudiant
         Student student = studentRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Student", "userId=" + user.getId()));
 
