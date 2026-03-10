@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.langly.app.course.entity.enums.Mode;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,14 +21,30 @@ public class Session {
     private String id;
     private String title;
     private String description;
-    private String durationMinutes;
-    private String schedualedAt;
+    private Integer durationMinutes;
+
+    @Column(name = "schedualed_at")
+    private LocalDateTime scheduledAt;
+
+    @Enumerated(EnumType.ORDINAL)
     private Mode mode;
+
+    /** Salle physique (pour IN_PERSON ou HYBRID) */
+    private String room;
+
+    /** Lien de réunion en ligne : Zoom, Google Meet, Teams, etc. (pour ONLINE ou HYBRID) */
+    private String meetingLink;
+
+    /** Token QR généré par le prof pour marquer la présence (US05) */
+    private String qrToken;
+
+    /** Date d'expiration du QR token (US05) */
+    private LocalDateTime qrExpiresAt;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
 
-    @OneToMany(mappedBy = "session",cascade = CascadeType.ALL)
-    private List<Attendance> attendanceRecordes = new ArrayList<>();
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL)
+    private List<Attendance> attendanceRecords = new ArrayList<>();
 }
