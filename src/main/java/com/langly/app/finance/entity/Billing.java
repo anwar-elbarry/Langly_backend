@@ -26,12 +26,12 @@ public class Billing {
     private String id;
     private BigDecimal price;
 
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private PaymentStatus status;
     private LocalDate nextBillDate;
 
     /** Méthode de paiement utilisée lors de la confirmation manuelle (CASH ou BANK_TRANSFER) */
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
     /** Date de paiement, renseignée lors de la confirmation par l'admin */
