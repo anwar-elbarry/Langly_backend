@@ -23,4 +23,27 @@ public interface EnrollmentService {
      * certificat.
      */
     EnrollmentResponse updateStatus(String enrollmentId, EnrollmentStatus status);
+
+    /**
+     * Student requests enrollment in a course.
+     * Creates enrollment with status PENDING_APPROVAL.
+     */
+    EnrollmentResponse requestEnrollment(String studentId, String courseId);
+
+    /**
+     * Admin approves a pending enrollment request.
+     * Sets status to APPROVED and creates a PENDING billing.
+     */
+    EnrollmentResponse approveEnrollment(String enrollmentId);
+
+    /**
+     * Admin rejects a pending enrollment request.
+     * Sets status to REJECTED.
+     */
+    EnrollmentResponse rejectEnrollment(String enrollmentId);
+
+    /**
+     * Get pending enrollment requests for a school.
+     */
+    List<EnrollmentResponse> getPendingBySchoolId(String schoolId);
 }

@@ -14,6 +14,7 @@ public interface StudentMapper {
     @Mapping(target = "phoneNumber",   source = "user.phoneNumber")
     @Mapping(target = "cnie",          source = "CNIE")
     @Mapping(target = "level",         expression = "java(student.getLevel() != null ? student.getLevel().name() : null)")
+    @Mapping(target = "gender",        expression = "java(student.getGender() != null ? student.getGender().name() : null)")
     @Mapping(target = "missingFields", ignore = true)
     StudentResponse toResponse(Student student);
 }

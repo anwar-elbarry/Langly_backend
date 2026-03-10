@@ -13,5 +13,6 @@ public interface EnrollmentMapper {
     @Mapping(target = "courseId",        source = "course.id")
     @Mapping(target = "courseName",      source = "course.name")
     @Mapping(target = "level",           expression = "java(enrollment.getStudent() != null && enrollment.getStudent().getLevel() != null ? enrollment.getStudent().getLevel().name() : null)")
+    @Mapping(target = "coursePrice",     source = "course.price")
     EnrollmentResponse toResponse(Enrollment enrollment);
 }

@@ -18,4 +18,7 @@ public class BillingResponse {
     private LocalDateTime paidAt;
     private String studentId;
     private String studentFullName;
+    private String enrollmentId;
+    private String courseId;
+    private String courseName;
 }

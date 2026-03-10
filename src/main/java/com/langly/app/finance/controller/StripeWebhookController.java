@@ -1,5 +1,7 @@
 package com.langly.app.finance.controller;
 
+import com.langly.app.course.entity.enums.EnrollmentStatus;
+import com.langly.app.course.repository.EnrollmentRepository;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.finance.entity.Billing;
 import com.langly.app.finance.entity.BillingHistory;
@@ -33,6 +35,7 @@ public class StripeWebhookController {
 
     private final BillingRepository billingRepository;
     private final StripeService stripeService;
+    private final EnrollmentRepository enrollmentRepository;
 
     @PostMapping("/stripe")
     @Transactional
@@ -89,6 +92,14 @@ public class StripeWebhookController {
         billing.getHistories().add(history);
 
         billingRepository.save(billing);
+
+        // Transition enrollment to IN_PROGRESS
+        if (billing.getEnrollment() != null
+                && billing.getEnrollment().getStatus() == EnrollmentStatus.APPROVED) {
+            billing.getEnrollment().setStatus(EnrollmentStatus.IN_PROGRESS);
+            enrollmentRepository.save(billing.getEnrollment());
+        }
+
         log.info("Paiement Stripe confirmé pour billing {}", billingId);
     }
 }

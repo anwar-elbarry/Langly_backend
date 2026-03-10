@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BillingRepository extends JpaRepository<Billing, String> {
@@ -13,4 +14,5 @@ public interface BillingRepository extends JpaRepository<Billing, String> {
     List<Billing> findAllByStudentId(String studentId);
     List<Billing> findAllByStudentUserSchoolId(String schoolId);
     List<Billing> findAllByStudentUserSchoolIdAndStatus(String schoolId, PaymentStatus status);
+    Optional<Billing> findByEnrollmentId(String enrollmentId);
 }

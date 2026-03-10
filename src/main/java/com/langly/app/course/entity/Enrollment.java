@@ -18,6 +18,8 @@ public class Enrollment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+
+    @Enumerated(EnumType.STRING)
     private EnrollmentStatus status;
     private LocalDate enrolledAt;
     private LocalDate leftAt;

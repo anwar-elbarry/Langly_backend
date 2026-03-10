@@ -1,5 +1,7 @@
 package com.langly.app.finance.service;
 
+import com.langly.app.course.entity.enums.EnrollmentStatus;
+import com.langly.app.course.repository.EnrollmentRepository;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.finance.entity.Billing;
 import com.langly.app.finance.entity.BillingHistory;
@@ -23,6 +25,7 @@ public class BillingServiceImpl implements BillingService {
 
     private final BillingRepository billingRepository;
     private final BillingMapper billingMapper;
+    private final EnrollmentRepository enrollmentRepository;
 
     @Override
     public List<BillingResponse> getPendingBySchoolId(String schoolId) {
@@ -62,6 +65,13 @@ public class BillingServiceImpl implements BillingService {
         history.setPaidAt(now);
         history.setBilling(billing);
         billing.getHistories().add(history);
+
+        // Transition enrollment to IN_PROGRESS on payment confirmation
+        if (billing.getEnrollment() != null
+                && billing.getEnrollment().getStatus() == EnrollmentStatus.APPROVED) {
+            billing.getEnrollment().setStatus(EnrollmentStatus.IN_PROGRESS);
+            enrollmentRepository.save(billing.getEnrollment());
+        }
 
         return billingMapper.toResponse(billingRepository.save(billing));
     }

@@ -58,6 +58,13 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollmentService.getAllBySchoolId(schoolId));
     }
 
+    @Operation(summary = "Demandes d'inscription en attente d'une école")
+    @GetMapping("/school/{schoolId}/pending")
+    @PreAuthorize("hasRole('SCHOOL_ADMIN')")
+    public ResponseEntity<List<EnrollmentResponse>> getPendingBySchoolId(@PathVariable String schoolId) {
+        return ResponseEntity.ok(enrollmentService.getPendingBySchoolId(schoolId));
+    }
+
     @Operation(summary = "Changer le statut d'une inscription", description = "US07 : Met à jour le statut (PASSED, FAILED, WITHDRAWN, etc.). Si PASSED → auto-génère un certificat PDF.")
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('SCHOOL_ADMIN','TEACHER')")
@@ -65,5 +72,19 @@ public class EnrollmentController {
             @PathVariable String id,
             @Valid @RequestBody UpdateEnrollmentStatusRequest request) {
         return ResponseEntity.ok(enrollmentService.updateStatus(id, request.getStatus()));
+    }
+
+    @Operation(summary = "Approuver une demande d'inscription", description = "Passe le statut de PENDING_APPROVAL à APPROVED et crée un billing PENDING.")
+    @PatchMapping("/{id}/approve")
+    @PreAuthorize("hasRole('SCHOOL_ADMIN')")
+    public ResponseEntity<EnrollmentResponse> approveEnrollment(@PathVariable String id) {
+        return ResponseEntity.ok(enrollmentService.approveEnrollment(id));
+    }
+
+    @Operation(summary = "Rejeter une demande d'inscription", description = "Passe le statut de PENDING_APPROVAL à REJECTED.")
+    @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasRole('SCHOOL_ADMIN')")
+    public ResponseEntity<EnrollmentResponse> rejectEnrollment(@PathVariable String id) {
+        return ResponseEntity.ok(enrollmentService.rejectEnrollment(id));
     }
 }

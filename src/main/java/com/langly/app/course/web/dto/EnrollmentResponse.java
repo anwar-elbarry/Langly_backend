@@ -3,6 +3,7 @@ package com.langly.app.course.web.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -21,4 +22,5 @@ public class EnrollmentResponse {
     private String courseId;
     private String courseName;
     private String level;
+    private BigDecimal coursePrice;
 }

@@ -2,6 +2,7 @@ package com.langly.app.student.entity;
 
 import com.langly.app.finance.entity.Billing;
 import com.langly.app.user.entity.User;
+import com.langly.app.student.entity.enums.Gender;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +24,10 @@ public class Student{
     private String id;
     private LocalDate birthDate;
     private String CNIE;
+    @Enumerated(EnumType.STRING)
     private Level level;
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

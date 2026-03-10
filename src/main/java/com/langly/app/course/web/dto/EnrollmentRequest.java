@@ -1,6 +1,5 @@
 package com.langly.app.course.web.dto;
 
-import com.langly.app.course.entity.enums.Level;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,11 +13,4 @@ public class EnrollmentRequest {
 
     @NotNull(message = "L'identifiant du cours est obligatoire")
     private String courseId;
-
-    /**
-     * Niveau de l'étudiant au moment de l'inscription.
-     * Met à jour la propriété {@code level} sur l'entité {@code Student}.
-     */
-    @NotNull(message = "Le niveau est obligatoire")
-    private Level level;
 }
