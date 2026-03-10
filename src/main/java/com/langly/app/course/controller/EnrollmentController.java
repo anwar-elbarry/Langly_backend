@@ -3,6 +3,7 @@ package com.langly.app.course.controller;
 import com.langly.app.course.service.EnrollmentService;
 import com.langly.app.course.web.dto.EnrollmentRequest;
 import com.langly.app.course.web.dto.EnrollmentResponse;
+import com.langly.app.course.web.dto.UpdateEnrollmentStatusRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -22,8 +23,7 @@ public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
 
-    @Operation(summary = "Inscrire un étudiant à un cours",
-            description = "Crée une inscription avec statut IN_PROGRESS et met à jour le niveau de l'étudiant")
+    @Operation(summary = "Inscrire un étudiant à un cours", description = "Crée une inscription avec statut IN_PROGRESS et met à jour le niveau de l'étudiant")
     @PostMapping
     @PreAuthorize("hasRole('SCHOOL_ADMIN')")
     public ResponseEntity<EnrollmentResponse> enroll(@Valid @RequestBody EnrollmentRequest request) {
@@ -56,5 +56,14 @@ public class EnrollmentController {
     @PreAuthorize("hasRole('SCHOOL_ADMIN')")
     public ResponseEntity<List<EnrollmentResponse>> getAllBySchoolId(@PathVariable String schoolId) {
         return ResponseEntity.ok(enrollmentService.getAllBySchoolId(schoolId));
+    }
+
+    @Operation(summary = "Changer le statut d'une inscription", description = "US07 : Met à jour le statut (PASSED, FAILED, WITHDRAWN, etc.). Si PASSED → auto-génère un certificat PDF.")
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('SCHOOL_ADMIN','TEACHER')")
+    public ResponseEntity<EnrollmentResponse> updateStatus(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateEnrollmentStatusRequest request) {
+        return ResponseEntity.ok(enrollmentService.updateStatus(id, request.getStatus()));
     }
 }
