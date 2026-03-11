@@ -15,4 +15,6 @@ public interface SessionRepository extends JpaRepository<Session, String> {
     List<Session> findAllByCourseIdAndScheduledAtAfterOrderByScheduledAtAsc(String courseId, LocalDateTime after);
 
     List<Session> findAllByCourseId(String courseId);
+
+    long countByCourseIdInAndScheduledAtAfter(List<String> courseIds, LocalDateTime after);
 }
