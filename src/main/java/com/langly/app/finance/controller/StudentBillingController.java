@@ -87,7 +87,7 @@ public class StudentBillingController {
         PaymentMethod method = request.getPaymentMethod();
         billing.setPaymentMethod(method);
 
-        if (method == PaymentMethod.STRIPE) {
+        if (method == PaymentMethod.STRIPE || method == PaymentMethod.ONLINE_GATEWAY) {
             return handleStripePayment(billing);
         }
 
