@@ -9,6 +9,10 @@ import com.langly.app.finance.entity.enums.PaymentMethod;
 import com.langly.app.finance.entity.enums.PaymentStatus;
 import com.langly.app.finance.repository.BillingRepository;
 import com.langly.app.finance.service.StripeService;
+import com.langly.app.notification.entity.enums.NotificationType;
+import com.langly.app.notification.service.NotificationService;
+import com.langly.app.user.entity.User;
+import com.langly.app.user.repository.UserRepository;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
@@ -20,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * US04 : Webhook Stripe pour confirmer le paiement.
@@ -36,6 +41,8 @@ public class StripeWebhookController {
     private final BillingRepository billingRepository;
     private final StripeService stripeService;
     private final EnrollmentRepository enrollmentRepository;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @PostMapping("/stripe")
     @Transactional
@@ -98,6 +105,30 @@ public class StripeWebhookController {
                 && billing.getEnrollment().getStatus() == EnrollmentStatus.APPROVED) {
             billing.getEnrollment().setStatus(EnrollmentStatus.IN_PROGRESS);
             enrollmentRepository.save(billing.getEnrollment());
+        }
+
+        // Notify school admin(s) about successful payment
+        if (billing.getStudent() != null && billing.getStudent().getUser() != null
+                && billing.getStudent().getUser().getSchool() != null) {
+            String schoolId = billing.getStudent().getUser().getSchool().getId();
+            List<User> schoolAdmins = userRepository.findAllBySchoolIdAndRoleName(schoolId, "SCHOOL_ADMIN");
+
+            String studentName = billing.getStudent().getUser().getFirstName() + " "
+                    + billing.getStudent().getUser().getLastName();
+            String courseName = billing.getEnrollment() != null && billing.getEnrollment().getCourse() != null
+                    ? billing.getEnrollment().getCourse().getName() : "N/A";
+
+            for (User admin : schoolAdmins) {
+                notificationService.sendNotification(
+                        admin.getId(),
+                        "Paiement en ligne reçu",
+                        String.format("L'étudiant %s a payé le cours %s (%s MAD) via Stripe.",
+                                studentName, courseName, billing.getPrice()),
+                        NotificationType.PAYMENT_SUCCESS,
+                        billing.getId(),
+                        "BILLING"
+                );
+            }
         }
 
         log.info("Paiement Stripe confirmé pour billing {}", billingId);
