@@ -6,6 +6,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -21,4 +22,5 @@ public class BillingResponse {
     private String enrollmentId;
     private String courseId;
     private String courseName;
+    private List<BillingHistoryResponse> histories;
 }
