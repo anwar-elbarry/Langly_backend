@@ -30,6 +30,9 @@ public class StripeService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    @Value("${app.frontend-base-url}")
+    private String frontendBaseUrl;
+
     @PostConstruct
     public void init() {
         Stripe.apiKey = apiKey;
@@ -42,8 +45,8 @@ public class StripeService {
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(
-                        baseUrl + "/api/v1/student/enrollments/checkout/success?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl(baseUrl + "/api/v1/student/enrollments/checkout/cancel")
+                        frontendBaseUrl + "/student/enroll?payment=success&session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl(frontendBaseUrl + "/student/enroll?payment=cancelled")
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setQuantity(1L)
