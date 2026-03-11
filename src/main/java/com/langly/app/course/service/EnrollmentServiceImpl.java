@@ -10,9 +10,7 @@ import com.langly.app.course.web.dto.EnrollmentResponse;
 import com.langly.app.course.web.mapper.EnrollmentMapper;
 import com.langly.app.exception.AlreadyExistsException;
 import com.langly.app.exception.ResourceNotFoundException;
-import com.langly.app.finance.entity.Billing;
-import com.langly.app.finance.entity.enums.PaymentStatus;
-import com.langly.app.finance.repository.BillingRepository;
+import com.langly.app.finance.service.InvoiceService;
 import com.langly.app.student.entity.Student;
 import com.langly.app.student.repository.StudentRepository;
 import com.langly.app.student.service.CertificationService;
@@ -35,7 +33,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final CourseRepository courseRepository;
     private final EnrollmentMapper enrollmentMapper;
     private final CertificationService certificationService;
-    private final BillingRepository billingRepository;
+    private final InvoiceService invoiceService;
 
     @Override
     @Transactional
@@ -120,7 +118,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
     @Override
     @Transactional
-    public EnrollmentResponse approveEnrollment(String enrollmentId) {
+    public EnrollmentResponse approveEnrollment(String enrollmentId, List<String> discountIds) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment", enrollmentId));
 
@@ -132,15 +130,10 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         enrollment.setStatus(EnrollmentStatus.APPROVED);
         Enrollment saved = enrollmentRepository.save(enrollment);
 
-        // Auto-create a PENDING billing linked to this enrollment
-        Billing billing = new Billing();
-        billing.setPrice(enrollment.getCourse().getPrice());
-        billing.setStatus(PaymentStatus.PENDING);
-        billing.setEnrollment(enrollment);
-        billing.setStudent(enrollment.getStudent());
-        billingRepository.save(billing);
+        // Generate invoice for this enrollment
+        invoiceService.generateInvoice(enrollmentId, discountIds);
 
-        log.info("Enrollment {} approved. Billing created for student {}", enrollmentId, enrollment.getStudent().getId());
+        log.info("Enrollment {} approved. Invoice generated for student {}", enrollmentId, enrollment.getStudent().getId());
 
         return enrollmentMapper.toResponse(saved);
     }

@@ -32,9 +32,9 @@ public interface EnrollmentService {
 
     /**
      * Admin approves a pending enrollment request.
-     * Sets status to APPROVED and creates a PENDING billing.
+     * Sets status to APPROVED and generates an invoice.
      */
-    EnrollmentResponse approveEnrollment(String enrollmentId);
+    EnrollmentResponse approveEnrollment(String enrollmentId, java.util.List<String> discountIds);
 
     /**
      * Admin rejects a pending enrollment request.
