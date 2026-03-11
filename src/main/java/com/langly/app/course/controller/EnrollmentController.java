@@ -1,6 +1,7 @@
 package com.langly.app.course.controller;
 
 import com.langly.app.course.service.EnrollmentService;
+import com.langly.app.course.web.dto.ApproveEnrollmentRequest;
 import com.langly.app.course.web.dto.EnrollmentRequest;
 import com.langly.app.course.web.dto.EnrollmentResponse;
 import com.langly.app.course.web.dto.UpdateEnrollmentStatusRequest;
@@ -74,11 +75,14 @@ public class EnrollmentController {
         return ResponseEntity.ok(enrollmentService.updateStatus(id, request.getStatus()));
     }
 
-    @Operation(summary = "Approuver une demande d'inscription", description = "Passe le statut de PENDING_APPROVAL à APPROVED et crée un billing PENDING.")
+    @Operation(summary = "Approuver une demande d'inscription", description = "Passe le statut de PENDING_APPROVAL à APPROVED et génère une facture.")
     @PatchMapping("/{id}/approve")
     @PreAuthorize("hasRole('SCHOOL_ADMIN')")
-    public ResponseEntity<EnrollmentResponse> approveEnrollment(@PathVariable String id) {
-        return ResponseEntity.ok(enrollmentService.approveEnrollment(id));
+    public ResponseEntity<EnrollmentResponse> approveEnrollment(
+            @PathVariable String id,
+            @RequestBody(required = false) ApproveEnrollmentRequest request) {
+        java.util.List<String> discountIds = request != null ? request.getDiscountIds() : null;
+        return ResponseEntity.ok(enrollmentService.approveEnrollment(id, discountIds));
     }
 
     @Operation(summary = "Rejeter une demande d'inscription", description = "Passe le statut de PENDING_APPROVAL à REJECTED.")
