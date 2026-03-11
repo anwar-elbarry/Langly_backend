@@ -34,6 +34,7 @@ resend:
 
 app:
   base-url: ${APP_BASE_URL}
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:4200}
   mail:
     enabled: false   # set to true in production with a verified Resend domain
 
