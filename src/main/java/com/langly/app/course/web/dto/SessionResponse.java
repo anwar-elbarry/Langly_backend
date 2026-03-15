@@ -18,4 +18,6 @@ public class SessionResponse {
     private String meetingLink;
     private String courseId;
     private String courseName;
+    private int presentCount;
+    private int totalEnrolled;
 }
