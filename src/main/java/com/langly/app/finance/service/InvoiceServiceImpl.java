@@ -7,6 +7,7 @@ import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.finance.entity.*;
 import com.langly.app.finance.entity.enums.*;
 import com.langly.app.finance.repository.*;
+import com.langly.app.finance.web.dto.FinancialSummaryResponse;
 import com.langly.app.finance.web.dto.InvoiceResponse;
 import com.langly.app.finance.web.dto.PaymentScheduleResponse;
 import com.langly.app.finance.web.dto.RecordPaymentRequest;
@@ -151,10 +152,10 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceLineRepository.saveAll(lines);
         savedInvoice.setLines(lines);
 
-        // Send notification to student
+        // Send notification to student (show subtotal — TVA is admin-only)
         try {
             String userId = enrollment.getStudent().getUser().getId();
-            String formattedTotal = totalTtc.setScale(2, RoundingMode.HALF_UP).toPlainString();
+            String formattedTotal = subtotal.setScale(2, RoundingMode.HALF_UP).toPlainString();
             notificationService.sendNotification(
                     userId,
                     "Nouvelle facture : " + invoiceNumber,
@@ -233,8 +234,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             totalPaid = paymentAmount;
         }
 
-        // Update invoice status
-        if (totalPaid.compareTo(invoice.getTotalTtc()) >= 0) {
+        // Update invoice status (student pays subtotal HT — TVA is admin tracking only)
+        if (totalPaid.compareTo(invoice.getSubtotal()) >= 0) {
             invoice.setStatus(InvoiceStatus.PAID);
 
             // Transition enrollment APPROVED → IN_PROGRESS
@@ -282,7 +283,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         List<PaymentSchedule> existing = paymentScheduleRepository.findAllByInvoiceId(invoiceId);
         paymentScheduleRepository.deleteAll(existing);
 
-        BigDecimal total = invoice.getTotalTtc();
+        // Student pays subtotal (HT) — TVA is admin tracking only
+        BigDecimal total = invoice.getSubtotal();
         LocalDate courseStart = invoice.getEnrollment() != null && invoice.getEnrollment().getCourse() != null
                 ? invoice.getEnrollment().getCourse().getStartDate()
                 : LocalDate.now();
@@ -318,6 +320,51 @@ public class InvoiceServiceImpl implements InvoiceService {
     public List<PaymentScheduleResponse> getSchedule(String invoiceId) {
         return paymentScheduleRepository.findAllByInvoiceIdOrderByInstallmentAsc(invoiceId)
                 .stream().map(invoiceMapper::toScheduleResponse).toList();
+    }
+
+    @Override
+    public FinancialSummaryResponse getFinancialSummary(String schoolId) {
+        List<Invoice> invoices = invoiceRepository.findAllBySchoolId(schoolId);
+
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        BigDecimal totalTva = BigDecimal.ZERO;
+        BigDecimal paidRevenue = BigDecimal.ZERO;
+        BigDecimal paidTva = BigDecimal.ZERO;
+        BigDecimal pendingRevenue = BigDecimal.ZERO;
+        BigDecimal pendingTva = BigDecimal.ZERO;
+        long paidCount = 0;
+        long unpaidCount = 0;
+        BigDecimal tvaRate = BigDecimal.valueOf(20);
+
+        BillingSetting settings = billingSettingRepository.findBySchoolId(schoolId).orElse(null);
+        if (settings != null) {
+            tvaRate = settings.getTvaRate();
+        }
+
+        for (Invoice inv : invoices) {
+            totalRevenue = totalRevenue.add(inv.getSubtotal());
+            totalTva = totalTva.add(inv.getTvaAmount());
+
+            if (inv.getStatus() == InvoiceStatus.PAID) {
+                paidRevenue = paidRevenue.add(inv.getSubtotal());
+                paidTva = paidTva.add(inv.getTvaAmount());
+                paidCount++;
+            } else {
+                pendingRevenue = pendingRevenue.add(inv.getSubtotal());
+                pendingTva = pendingTva.add(inv.getTvaAmount());
+                unpaidCount++;
+            }
+        }
+
+        BigDecimal totalTtc = totalRevenue.add(totalTva);
+
+        return new FinancialSummaryResponse(
+                totalRevenue, totalTva, totalTtc,
+                paidRevenue, paidTva,
+                pendingRevenue, pendingTva,
+                invoices.size(), paidCount, unpaidCount,
+                tvaRate
+        );
     }
 
     // --- Private helpers ---

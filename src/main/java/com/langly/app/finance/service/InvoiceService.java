@@ -1,6 +1,7 @@
 package com.langly.app.finance.service;
 
 import com.langly.app.finance.entity.enums.InstallmentPlan;
+import com.langly.app.finance.web.dto.FinancialSummaryResponse;
 import com.langly.app.finance.web.dto.InvoiceResponse;
 import com.langly.app.finance.web.dto.PaymentScheduleResponse;
 import com.langly.app.finance.web.dto.RecordPaymentRequest;
@@ -22,4 +23,6 @@ public interface InvoiceService {
     List<PaymentScheduleResponse> createInstallmentPlan(String invoiceId, InstallmentPlan plan);
 
     List<PaymentScheduleResponse> getSchedule(String invoiceId);
+
+    FinancialSummaryResponse getFinancialSummary(String schoolId);
 }
