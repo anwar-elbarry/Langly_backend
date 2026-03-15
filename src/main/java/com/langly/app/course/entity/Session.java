@@ -35,12 +35,6 @@ public class Session {
     /** Lien de réunion en ligne : Zoom, Google Meet, Teams, etc. (pour ONLINE ou HYBRID) */
     private String meetingLink;
 
-    /** Token QR généré par le prof pour marquer la présence (US05) */
-    private String qrToken;
-
-    /** Date d'expiration du QR token (US05) */
-    private LocalDateTime qrExpiresAt;
-
     @ManyToOne
     @JoinColumn(name = "course_id")
     private Course course;
