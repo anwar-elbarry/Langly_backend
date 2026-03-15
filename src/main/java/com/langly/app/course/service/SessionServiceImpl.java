@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -29,6 +30,8 @@ public class SessionServiceImpl implements SessionService {
     public SessionResponse create(SessionRequest request) {
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
+
+        validateSessionDate(request.getScheduledAt(), course);
 
         Session session = sessionMapper.toEntity(request);
         session.setCourse(course);
@@ -64,6 +67,8 @@ public class SessionServiceImpl implements SessionService {
         Course course = courseRepository.findById(request.getCourseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
 
+        validateSessionDate(request.getScheduledAt(), course);
+
         session.setTitle(request.getTitle());
         session.setDescription(request.getDescription());
         session.setDurationMinutes(request.getDurationMinutes());
@@ -74,6 +79,18 @@ public class SessionServiceImpl implements SessionService {
         session.setCourse(course);
 
         return sessionMapper.toResponse(sessionRepository.save(session));
+    }
+
+    private void validateSessionDate(LocalDateTime scheduledAt, Course course) {
+        LocalDate sessionDate = scheduledAt.toLocalDate();
+        if (course.getStartDate() != null && sessionDate.isBefore(course.getStartDate())) {
+            throw new IllegalArgumentException(
+                    "La session ne peut pas être planifiée avant la date de début du cours (" + course.getStartDate() + ")");
+        }
+        if (course.getEndDate() != null && sessionDate.isAfter(course.getEndDate())) {
+            throw new IllegalArgumentException(
+                    "La session ne peut pas être planifiée après la date de fin du cours (" + course.getEndDate() + ")");
+        }
     }
 
     @Override
