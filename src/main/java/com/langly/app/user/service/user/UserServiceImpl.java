@@ -18,6 +18,7 @@ import com.langly.app.user.web.dto.request.UserRequest;
 import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
 import com.langly.app.user.web.mapper.UserMapper;
+import com.langly.app.shared.util.FileStorageService;
 import com.langly.app.shared.util.PasswordGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +44,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final PasswordGenerator passwordGenerator;
+    private final FileStorageService fileStorageService;
 
     @Override
     public UserResponse create(UserRequest request) {
@@ -203,6 +206,23 @@ public class UserServiceImpl implements UserService {
         // Mettre à jour le mot de passe
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Override
+    public UserResponse uploadProfileImage(String id, MultipartFile file) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        // Store the file and get the generated filename
+        String filename = fileStorageService.store(file);
+        
+        // Build the URL to serve the file
+        String fileUrl = "/api/v1/files/" + filename;
+        
+        user.setProfile(fileUrl);
+        User updatedUser = userRepository.save(user);
+        
+        return userMapper.toResponse(updatedUser);
     }
 
 }

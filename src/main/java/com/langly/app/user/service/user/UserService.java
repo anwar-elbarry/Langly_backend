@@ -6,6 +6,7 @@ import com.langly.app.user.web.dto.request.UserUpdateRequest;
 import com.langly.app.user.web.dto.response.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,4 +33,6 @@ public interface UserService {
     void suspend(String id);
 
     void updatePassword(String id, UpdatePasswordRequest request);
+
+    UserResponse uploadProfileImage(String id, MultipartFile file);
 }
