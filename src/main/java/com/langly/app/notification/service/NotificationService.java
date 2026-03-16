@@ -13,4 +13,5 @@ public interface NotificationService {
     long getUnreadCount(String userId);
     void markAsRead(String notificationId);
     void markAllAsRead(String userId);
+    void deleteAllMyNotifications(String userId);
 }
