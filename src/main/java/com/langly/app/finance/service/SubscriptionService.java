@@ -19,4 +19,8 @@ public interface SubscriptionService {
     SubscriptionResponse updatePaymentStatus(String id, PaymentStatusUpdateRequest request);
 
     void delete(String id);
+
+    PaymentResponse pay(String id, SelectPaymentMethodRequest request);
+    
+    void declareTransfer(String id);
 }

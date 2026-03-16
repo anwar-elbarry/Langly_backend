@@ -9,10 +9,14 @@ import com.langly.app.finance.exception.SubscriptionNotFoundException;
 import com.langly.app.finance.repository.SubscriptionHistoryRepository;
 import com.langly.app.finance.repository.SubscriptionRepository;
 import com.langly.app.finance.web.dto.*;
-import com.langly.app.finance.web.mapper.SubscriptionMapper;
+import com.langly.app.notification.entity.enums.NotificationType;
+import com.langly.app.notification.service.NotificationService;
 import com.langly.app.school.entity.School;
 import com.langly.app.school.exception.SchoolNotFoundException;
 import com.langly.app.school.repository.SchoolRepository;
+import com.langly.app.user.entity.User;
+import com.langly.app.user.repository.UserRepository;
+import com.langly.app.finance.web.mapper.SubscriptionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +24,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SubscriptionServiceImpl implements SubscriptionService {
-
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionHistoryRepository subscriptionHistoryRepository;
     private final SchoolRepository schoolRepository;
     private final SubscriptionMapper subscriptionMapper;
+    private final StripeService stripeService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -121,6 +130,20 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     subscription.setCurrentPeriodStart(newPeriodStart);
                     subscription.setCurrentPeriodEnd(calculatePeriodEnd(newPeriodStart, subscription.getBillingCycle()));
                     subscription.setNextPaymentDate(calculatePeriodEnd(newPeriodStart, subscription.getBillingCycle()));
+                    
+                    // Notify school admins
+                    List<User> schoolAdmins = userRepository.findAllBySchoolIdAndRoleName(school.getId(), "SCHOOL_ADMIN");
+                    String msg = "Votre paiement a été validé. Votre école est maintenant active.";
+                    for (User admin : schoolAdmins) {
+                        notificationService.sendNotification(
+                                admin.getId(),
+                                "Abonnement Activé",
+                                msg,
+                                NotificationType.SUBSCRIPTION_ACTIVATED,
+                                subscription.getId(),
+                                "SUBSCRIPTION"
+                        );
+                    }
                 }
                 case OVERDUE -> school.setStatus(SchoolStatus.SUSPENDED);
                 default -> { /* no school status change for PENDING / CANCELLED */ }
@@ -146,5 +169,64 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             case MONTHLY -> start.plusMonths(1);
             case YEARLY -> start.plusYears(1);
         };
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponse pay(String id, SelectPaymentMethodRequest request) {
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new SubscriptionNotFoundException("id", id));
+        
+        com.langly.app.finance.entity.enums.PaymentMethod method = request.getPaymentMethod();
+        
+        if (method == com.langly.app.finance.entity.enums.PaymentMethod.STRIPE) {
+            try {
+                com.stripe.model.checkout.Session session = stripeService.createSubscriptionCheckoutSession(subscription);
+                return new PaymentResponse(null, session.getUrl());
+            } catch (com.stripe.exception.StripeException e) {
+                log.error("Erreur lors de la création de la session Stripe", e);
+                throw new RuntimeException("Erreur lors de l'initialisation du paiement Stripe", e);
+            }
+        }
+        
+        return new PaymentResponse(null, null);
+    }
+    
+    @Override
+    @Transactional
+    public void declareTransfer(String id) {
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new SubscriptionNotFoundException("id", id));
+                
+        // Only update if it's currently PENDING
+        if (subscription.getStatus() == PaymentStatus.PENDING) {
+            subscription.setStatus(PaymentStatus.PENDING_TRANSFER);
+            subscriptionRepository.save(subscription);
+        }
+
+        String schoolName = subscription.getSchool() != null ? subscription.getSchool().getName() : "Inconnue";
+        
+        // Find all Super Admins to notify them
+        // The role name in the database is "SUPER_ADMIN"
+        com.langly.app.Authority.entity.Role superAdminRole = userRepository.findAll().stream()
+                .map(User::getRole)
+                .filter(r -> r != null && "SUPER_ADMIN".equals(r.getName()))
+                .findFirst()
+                .orElse(null);
+
+        if (superAdminRole != null) {
+            List<User> superAdmins = userRepository.findAllByRole(superAdminRole);
+            String msg = "L'école " + schoolName + " a déclaré un virement bancaire pour l'abonnement " + subscription.getId() + ". En attente de validation.";
+            for (User admin : superAdmins) {
+                notificationService.sendNotification(
+                        admin.getId(),
+                        "Virement Déclaré",
+                        msg,
+                        NotificationType.SUBSCRIPTION_TRANSFER_DECLARED,
+                        subscription.getId(),
+                        "SUBSCRIPTION"
+                );
+            }
+        }
     }
 }
