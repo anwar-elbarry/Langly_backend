@@ -55,4 +55,11 @@ public class NotificationController {
         notificationService.markAllAsRead(user.getId());
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/all")
+    @Operation(summary = "Supprimer toutes mes notifications")
+    public ResponseEntity<Void> deleteAll(@AuthenticationPrincipal User user) {
+        notificationService.deleteAllMyNotifications(user.getId());
+        return ResponseEntity.noContent().build();
+    }
 }
