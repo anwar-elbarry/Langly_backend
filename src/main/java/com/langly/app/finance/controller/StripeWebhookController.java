@@ -13,6 +13,12 @@ import com.langly.app.notification.entity.enums.NotificationType;
 import com.langly.app.notification.service.NotificationService;
 import com.langly.app.user.entity.User;
 import com.langly.app.user.repository.UserRepository;
+import com.langly.app.course.entity.enums.SchoolStatus;
+import com.langly.app.finance.repository.SubscriptionRepository;
+import com.langly.app.finance.repository.SubscriptionHistoryRepository;
+import com.langly.app.school.repository.SchoolRepository;
+import com.langly.app.finance.entity.Subscription;
+import com.langly.app.finance.entity.SubscriptionHistory;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
@@ -43,6 +49,9 @@ public class StripeWebhookController {
     private final EnrollmentRepository enrollmentRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionHistoryRepository subscriptionHistoryRepository;
+    private final SchoolRepository schoolRepository;
 
     @PostMapping("/stripe")
     @Transactional
@@ -66,6 +75,11 @@ public class StripeWebhookController {
                 String billingId = session.getMetadata().get("billing_id");
                 if (billingId != null) {
                     handlePaymentSuccess(billingId, session.getPaymentIntent());
+                }
+
+                String subscriptionId = session.getMetadata().get("subscription_id");
+                if (subscriptionId != null) {
+                    handleSubscriptionPaymentSuccess(subscriptionId);
                 }
             }
         }
@@ -132,5 +146,59 @@ public class StripeWebhookController {
         }
 
         log.info("Paiement Stripe confirmé pour billing {}", billingId);
+    }
+
+    private void handleSubscriptionPaymentSuccess(String subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
+        if (subscription == null || subscription.getStatus() == PaymentStatus.PAID) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        subscription.setStatus(PaymentStatus.PAID);
+
+        SubscriptionHistory history = new SubscriptionHistory();
+        history.setAmount(subscription.getAmount());
+        history.setStatusAtThatTime(PaymentStatus.PAID);
+        history.setPaymentMethod(PaymentMethod.STRIPE);
+        history.setPaidAt(now);
+        history.setSubscription(subscription);
+        subscriptionHistoryRepository.save(history);
+
+        com.langly.app.school.entity.School school = subscription.getSchool();
+        if (school != null) {
+            school.setStatus(SchoolStatus.ACTIVE);
+            
+            java.time.LocalDate newPeriodStart = subscription.getCurrentPeriodEnd() != null ? subscription.getCurrentPeriodEnd() : java.time.LocalDate.now();
+            subscription.setCurrentPeriodStart(newPeriodStart);
+            
+            java.time.LocalDate newPeriodEnd = switch(subscription.getBillingCycle()) {
+                case MONTHLY -> newPeriodStart.plusMonths(1);
+                case YEARLY -> newPeriodStart.plusYears(1);
+            };
+            subscription.setCurrentPeriodEnd(newPeriodEnd);
+            subscription.setNextPaymentDate(newPeriodEnd);
+            
+            schoolRepository.save(school);
+        }
+
+        subscriptionRepository.save(subscription);
+        log.info("Paiement Stripe confirmé pour subscription {}", subscriptionId);
+
+        // Notify school admins
+        if (school != null) {
+            String msg = "Votre paiement a été validé via Stripe. Votre école est maintenant active.";
+            List<User> schoolAdmins = userRepository.findAllBySchoolIdAndRoleName(school.getId(), "SCHOOL_ADMIN");
+            for (User admin : schoolAdmins) {
+                notificationService.sendNotification(
+                        admin.getId(),
+                        "Abonnement Activé",
+                        msg,
+                        NotificationType.SUBSCRIPTION_ACTIVATED,
+                        subscription.getId(),
+                        "SUBSCRIPTION"
+                );
+            }
+        }
     }
 }
