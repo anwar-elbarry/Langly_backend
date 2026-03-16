@@ -7,6 +7,7 @@ import com.langly.app.user.web.dto.response.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,4 +33,6 @@ public interface UserController {
     ResponseEntity<Void> suspend(String id);
 
     ResponseEntity<Void> updatePassword(String id, UpdatePasswordRequest request);
+
+    ResponseEntity<UserResponse> uploadProfileImage(String id, MultipartFile file);
 }

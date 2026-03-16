@@ -15,7 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -160,5 +162,18 @@ public class UserControllerImpl implements UserController {
     public ResponseEntity<Void> updatePassword(@PathVariable String id, @Valid @RequestBody UpdatePasswordRequest request) {
         userService.updatePassword(id, request);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Upload profile image", description = "Uploads a profile image for the user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request or file type"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    @PostMapping(value = "/{id}/profile-image", consumes = "multipart/form-data")
+    @Override
+    public ResponseEntity<UserResponse> uploadProfileImage(@PathVariable String id, @RequestParam("file") MultipartFile file) {
+        UserResponse response = userService.uploadProfileImage(id, file);
+        return ResponseEntity.ok(response);
     }
 }
