@@ -76,4 +76,34 @@ public class StripeService {
     public Event verifyWebhookSignature(String payload, String sigHeader) throws SignatureVerificationException {
         return Webhook.constructEvent(payload, sigHeader, webhookSecret);
     }
+
+    /**
+     * Crée une session Stripe Checkout pour le paiement d'un abonnement.
+     */
+    public Session createSubscriptionCheckoutSession(com.langly.app.finance.entity.Subscription subscription) throws StripeException {
+        SessionCreateParams params = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .setSuccessUrl(
+                        frontendBaseUrl + "/admin/subscription?payment=success&session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl(frontendBaseUrl + "/admin/subscription?payment=cancelled")
+                .addLineItem(
+                        SessionCreateParams.LineItem.builder()
+                                .setQuantity(1L)
+                                .setPriceData(
+                                        SessionCreateParams.LineItem.PriceData.builder()
+                                                .setCurrency(subscription.getCurrency() != null ? subscription.getCurrency().toLowerCase() : "mad")
+                                                .setUnitAmount(subscription.getAmount()
+                                                        .multiply(java.math.BigDecimal.valueOf(100)).longValue())
+                                                .setProductData(
+                                                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                                .setName("Abonnement SaaS")
+                                                                .setDescription("Abonnement " + subscription.getBillingCycle().name())
+                                                                .build())
+                                                .build())
+                                .build())
+                .putMetadata("subscription_id", subscription.getId())
+                .build();
+
+        return Session.create(params);
+    }
 }
