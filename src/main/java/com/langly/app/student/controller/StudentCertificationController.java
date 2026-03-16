@@ -48,4 +48,13 @@ public class StudentCertificationController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                 .body(resource);
     }
+
+    @PostMapping(value = "/upload", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('SCHOOL_ADMIN')")
+    @Operation(summary = "Uploader un certificat", description = "L'admin uploade un PDF pour un étudiant ayant réussi un cours")
+    public ResponseEntity<CertificationResponse> uploadCertificate(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam("enrollmentId") String enrollmentId) {
+        return ResponseEntity.ok(certificationService.uploadCertificate(file, enrollmentId));
+    }
 }
