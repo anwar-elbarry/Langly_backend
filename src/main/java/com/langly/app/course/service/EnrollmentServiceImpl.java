@@ -11,9 +11,12 @@ import com.langly.app.course.web.mapper.EnrollmentMapper;
 import com.langly.app.exception.AlreadyExistsException;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.finance.service.InvoiceService;
+import com.langly.app.notification.entity.enums.NotificationType;
+import com.langly.app.notification.service.NotificationService;
 import com.langly.app.student.entity.Student;
 import com.langly.app.student.repository.StudentRepository;
-import com.langly.app.student.service.CertificationService;
+import com.langly.app.user.entity.User;
+import com.langly.app.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +35,8 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final StudentRepository studentRepository;
     private final CourseRepository courseRepository;
     private final EnrollmentMapper enrollmentMapper;
-    private final CertificationService certificationService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
     private final InvoiceService invoiceService;
 
     @Override
@@ -197,13 +201,28 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         Enrollment saved = enrollmentRepository.save(enrollment);
 
-        // US07 : Auto-générer le certificat si PASSED
+        // Notify School Admin to generate certificate if PASSED
         if (status == EnrollmentStatus.PASSED && !Boolean.TRUE.equals(enrollment.getCertificateIssued())) {
             try {
-                certificationService.generateCertificate(enrollmentId);
-                log.info("Certificat auto-généré pour enrollment {}", enrollmentId);
+                String schoolId = enrollment.getStudent().getUser().getSchool().getId();
+                List<User> admins = userRepository.findAllBySchoolIdAndRoleName(schoolId, "SCHOOL_ADMIN");
+                
+                String studentName = enrollment.getStudent().getUser().getFirstName() + " " + enrollment.getStudent().getUser().getLastName();
+                String courseName = enrollment.getCourse().getName();
+                
+                for (User admin : admins) {
+                    notificationService.sendNotification(
+                            admin.getId(),
+                            "Certificat requis",
+                            "L'étudiant " + studentName + " a réussi le cours " + courseName + ". Veuillez lui générer et uploader un certificat.",
+                            NotificationType.COURSE_COMPLETED,
+                            enrollmentId,
+                            "Enrollment"
+                    );
+                }
+                log.info("Notifications envoyées aux School Admins pour l'enrollment {}", enrollmentId);
             } catch (Exception e) {
-                log.error("Erreur lors de la génération auto du certificat pour enrollment {}", enrollmentId, e);
+                log.error("Erreur lors de l'envoi des notifications pour enrollment {}", enrollmentId, e);
             }
         }
 
