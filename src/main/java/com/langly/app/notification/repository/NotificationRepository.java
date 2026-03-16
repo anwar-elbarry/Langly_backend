@@ -12,4 +12,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
     List<Notification> findAllByRecipientIdAndStatusOrderByCreatedAtDesc(String recipientId, NotificationStatus status);
     List<Notification> findAllByRecipientIdOrderByCreatedAtDesc(String recipientId);
     long countByRecipientIdAndStatus(String recipientId, NotificationStatus status);
+    void deleteAllByRecipientId(String recipientId);
 }
