@@ -3,6 +3,8 @@ package com.langly.app.student.service;
 import com.langly.app.course.entity.Enrollment;
 import com.langly.app.course.repository.EnrollmentRepository;
 import com.langly.app.exception.ResourceNotFoundException;
+import com.langly.app.notification.entity.enums.NotificationType;
+import com.langly.app.notification.service.NotificationService;
 import com.langly.app.shared.util.FileStorageService;
 import com.langly.app.student.entity.Certification;
 import com.langly.app.student.entity.Student;
@@ -14,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,8 +30,8 @@ public class CertificationServiceImpl implements CertificationService {
     private final CertificationRepository certificationRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final CertificationMapper certificationMapper;
-    private final PdfGeneratorService pdfGeneratorService;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     @Override
     public List<CertificationResponse> getByStudentId(String studentId) {
@@ -38,9 +41,13 @@ public class CertificationServiceImpl implements CertificationService {
 
     @Override
     @Transactional
-    public CertificationResponse generateCertificate(String enrollmentId) {
+    public CertificationResponse uploadCertificate(MultipartFile file, String enrollmentId) {
         Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Enrollment", enrollmentId));
+
+        if (!file.getContentType().equalsIgnoreCase("application/pdf")) {
+            throw new IllegalArgumentException("Le fichier doit être un PDF valide.");
+        }
 
         Student student = enrollment.getStudent();
         var course = enrollment.getCourse();
@@ -48,13 +55,10 @@ public class CertificationServiceImpl implements CertificationService {
 
         String studentName = student.getUser().getFirstName() + " " + student.getUser().getLastName();
         String language = course.getLanguage();
-        String level = course.getTargetLevel() != null ? course.getTargetLevel().name() : "";
-        String schoolName = school != null ? school.getName() : "Langly";
         LocalDateTime issuedAt = LocalDateTime.now();
 
-        // Générer le PDF
-        String pdfPath = pdfGeneratorService.generateCertificate(
-                studentName, course.getName(), language, level, schoolName, issuedAt);
+        // Sauvegarder le PDF
+        String pdfPath = fileStorageService.store(file);
 
         // Créer l'entité Certification
         Certification cert = new Certification();
@@ -71,7 +75,21 @@ public class CertificationServiceImpl implements CertificationService {
         enrollmentRepository.save(enrollment);
 
         Certification saved = certificationRepository.save(cert);
-        log.info("Certificat généré pour l'étudiant {} (enrollment {})", studentName, enrollmentId);
+        log.info("Certificat uploadé pour l'étudiant {} (enrollment {})", studentName, enrollmentId);
+
+        // Notifier l'étudiant
+        try {
+            notificationService.sendNotification(
+                    student.getUser().getId(),
+                    "Nouveau Certificat",
+                    "Félicitations ! Votre certificat pour le cours " + course.getName() + " est désormais disponible dans votre espace.",
+                    NotificationType.CERTIFICATE_ISSUED,
+                    saved.getId(),
+                    "Certification"
+            );
+        } catch (Exception e) {
+            log.error("Erreur lors de l'envoi de la notification de certificat à l'étudiant {}", student.getId(), e);
+        }
 
         return certificationMapper.toResponse(saved);
     }

@@ -11,7 +11,10 @@ import java.util.List;
 public interface CertificationService {
     List<CertificationResponse> getByStudentId(String studentId);
 
-    CertificationResponse generateCertificate(String enrollmentId);
+    /**
+     * School Admin uploads a PDF certificate for an enrollment.
+     */
+    CertificationResponse uploadCertificate(org.springframework.web.multipart.MultipartFile file, String enrollmentId);
 
     Resource downloadCertificate(String certId);
 }
