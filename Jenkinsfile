@@ -30,7 +30,7 @@ pipeline {
 
     stage('Build & Test') {
       steps {
-        sh '''
+        bat '''
           set -eu
 
           POSTGRES_CONTAINER="langly-ci-postgres-${BUILD_ID}"
@@ -89,7 +89,7 @@ pipeline {
 
     stage('Docker Image Build') {
       steps {
-        sh '''
+        bat '''
           set -eu
           docker build -t "${IMAGE_NAME}:${BUILD_ID}" .
         '''
@@ -105,7 +105,7 @@ pipeline {
             passwordVariable: 'DOCKER_HUB_PASSWORD'
           )
         ]) {
-          sh '''
+          bat '''
             set -eu
 
             cleanup() {
@@ -124,7 +124,7 @@ pipeline {
 
   post {
     always {
-      sh(
+      bat(
         returnStatus: true,
         script: '''
           POSTGRES_CONTAINER="langly-ci-postgres-${BUILD_ID}"
@@ -133,7 +133,7 @@ pipeline {
           docker rm -f "$POSTGRES_CONTAINER" "$REDIS_CONTAINER" >/dev/null 2>&1 || true
         '''
       )
-      sh(
+      bat(
         returnStatus: true,
         script: '''
           CI_NETWORK="langly-ci-${BUILD_ID}"
@@ -141,7 +141,7 @@ pipeline {
           docker network rm "$CI_NETWORK" >/dev/null 2>&1 || true
         '''
       )
-      sh(
+      bat(
         returnStatus: true,
         script: '''
           docker image rm -f "${IMAGE_NAME}:${BUILD_ID}" >/dev/null 2>&1 || true
