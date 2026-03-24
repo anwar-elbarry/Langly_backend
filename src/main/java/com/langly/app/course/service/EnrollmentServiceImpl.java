@@ -10,6 +10,9 @@ import com.langly.app.course.web.dto.EnrollmentResponse;
 import com.langly.app.course.web.mapper.EnrollmentMapper;
 import com.langly.app.exception.AlreadyExistsException;
 import com.langly.app.exception.ResourceNotFoundException;
+import com.langly.app.finance.entity.Billing;
+import com.langly.app.finance.entity.enums.PaymentStatus;
+import com.langly.app.finance.repository.BillingRepository;
 import com.langly.app.finance.service.InvoiceService;
 import com.langly.app.notification.entity.enums.NotificationType;
 import com.langly.app.notification.service.NotificationService;
@@ -38,6 +41,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final InvoiceService invoiceService;
+    private final BillingRepository billingRepository;
 
     @Override
     @Transactional
@@ -117,7 +121,28 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         enrollment.setEnrolledAt(LocalDate.now());
         enrollment.setCertificateIssued(false);
 
-        return enrollmentMapper.toResponse(enrollmentRepository.save(enrollment));
+        Enrollment saved = enrollmentRepository.save(enrollment);
+
+        // Notify all SCHOOL_ADMINs of this student's school
+        try {
+            String schoolId = student.getUser().getSchool().getId();
+            List<User> admins = userRepository.findAllBySchoolIdAndRoleName(schoolId, "SCHOOL_ADMIN");
+            String studentName = student.getUser().getFirstName() + " " + student.getUser().getLastName();
+            for (User admin : admins) {
+                notificationService.sendNotification(
+                        admin.getId(),
+                        "Nouvelle demande d'inscription",
+                        studentName + " demande à s'inscrire au cours " + course.getName(),
+                        NotificationType.ENROLLMENT_REQUEST,
+                        saved.getId(),
+                        "ENROLLMENT"
+                );
+            }
+        } catch (Exception e) {
+            log.error("Erreur lors de l'envoi de la notification ENROLLMENT_REQUEST pour {}", saved.getId(), e);
+        }
+
+        return enrollmentMapper.toResponse(saved);
     }
 
     @Override
@@ -136,6 +161,30 @@ public class EnrollmentServiceImpl implements EnrollmentService {
 
         // Generate invoice for this enrollment
         invoiceService.generateInvoice(enrollmentId, discountIds);
+
+        // Create Billing record so student can select payment method
+        Billing billing = new Billing();
+        billing.setPrice(enrollment.getCourse().getPrice());
+        billing.setStatus(PaymentStatus.PENDING);
+        billing.setEnrollment(saved);
+        billing.setStudent(enrollment.getStudent());
+        billingRepository.save(billing);
+
+        // Notify the student that their enrollment was approved
+        try {
+            String userId = enrollment.getStudent().getUser().getId();
+            String courseName = enrollment.getCourse().getName();
+            notificationService.sendNotification(
+                    userId,
+                    "Inscription approuvée",
+                    "Votre inscription au cours " + courseName + " a été approuvée. Veuillez procéder au paiement.",
+                    NotificationType.ENROLLMENT_APPROVED,
+                    saved.getId(),
+                    "ENROLLMENT"
+            );
+        } catch (Exception e) {
+            log.error("Erreur lors de l'envoi de la notification ENROLLMENT_APPROVED pour {}", enrollmentId, e);
+        }
 
         log.info("Enrollment {} approved. Invoice generated for student {}", enrollmentId, enrollment.getStudent().getId());
 
@@ -156,9 +205,27 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         enrollment.setStatus(EnrollmentStatus.REJECTED);
         enrollment.setLeftAt(LocalDate.now());
 
+        Enrollment saved = enrollmentRepository.save(enrollment);
+
+        // Notify the student that their enrollment was rejected
+        try {
+            String userId = enrollment.getStudent().getUser().getId();
+            String courseName = enrollment.getCourse().getName();
+            notificationService.sendNotification(
+                    userId,
+                    "Inscription refusée",
+                    "Votre demande d'inscription au cours " + courseName + " a été refusée.",
+                    NotificationType.ENROLLMENT_REJECTED,
+                    saved.getId(),
+                    "ENROLLMENT"
+            );
+        } catch (Exception e) {
+            log.error("Erreur lors de l'envoi de la notification ENROLLMENT_REJECTED pour {}", enrollmentId, e);
+        }
+
         log.info("Enrollment {} rejected", enrollmentId);
 
-        return enrollmentMapper.toResponse(enrollmentRepository.save(enrollment));
+        return enrollmentMapper.toResponse(saved);
     }
 
     @Override
