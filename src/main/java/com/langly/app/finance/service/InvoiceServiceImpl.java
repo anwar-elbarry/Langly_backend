@@ -111,17 +111,18 @@ public class InvoiceServiceImpl implements InvoiceService {
             }
         }
 
-        // Compute totals
-        BigDecimal subtotal = lines.stream()
+        // Compute totals — prices are TTC (tax-inclusive)
+        BigDecimal totalTtc = lines.stream()
                 .map(InvoiceLine::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (subtotal.compareTo(BigDecimal.ZERO) < 0) {
-            subtotal = BigDecimal.ZERO;
+        if (totalTtc.compareTo(BigDecimal.ZERO) < 0) {
+            totalTtc = BigDecimal.ZERO;
         }
 
-        BigDecimal tvaAmount = subtotal.multiply(tvaRate)
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        BigDecimal totalTtc = subtotal.add(tvaAmount);
+        // Extract HT from TTC: subtotal = totalTtc / (1 + tvaRate/100)
+        BigDecimal divisor = BigDecimal.ONE.add(tvaRate.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP));
+        BigDecimal subtotal = totalTtc.divide(divisor, 2, RoundingMode.HALF_UP);
+        BigDecimal tvaAmount = totalTtc.subtract(subtotal);
 
         // Compute due date
         LocalDate courseStart = enrollment.getCourse().getStartDate();
@@ -152,10 +153,10 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceLineRepository.saveAll(lines);
         savedInvoice.setLines(lines);
 
-        // Send notification to student (show subtotal — TVA is admin-only)
+        // Send notification to student (show TTC amount — what they actually pay)
         try {
             String userId = enrollment.getStudent().getUser().getId();
-            String formattedTotal = subtotal.setScale(2, RoundingMode.HALF_UP).toPlainString();
+            String formattedTotal = totalTtc.setScale(2, RoundingMode.HALF_UP).toPlainString();
             notificationService.sendNotification(
                     userId,
                     "Nouvelle facture : " + invoiceNumber,
@@ -234,8 +235,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             totalPaid = paymentAmount;
         }
 
-        // Update invoice status (student pays subtotal HT — TVA is admin tracking only)
-        if (totalPaid.compareTo(invoice.getSubtotal()) >= 0) {
+        // Update invoice status — student pays totalTtc (the full price set by admin)
+        if (totalPaid.compareTo(invoice.getTotalTtc()) >= 0) {
             invoice.setStatus(InvoiceStatus.PAID);
 
             // Transition enrollment APPROVED → IN_PROGRESS
@@ -283,8 +284,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         List<PaymentSchedule> existing = paymentScheduleRepository.findAllByInvoiceId(invoiceId);
         paymentScheduleRepository.deleteAll(existing);
 
-        // Student pays subtotal (HT) — TVA is admin tracking only
-        BigDecimal total = invoice.getSubtotal();
+        // Student pays totalTtc (the full price set by admin, tax-inclusive)
+        BigDecimal total = invoice.getTotalTtc();
         LocalDate courseStart = invoice.getEnrollment() != null && invoice.getEnrollment().getCourse() != null
                 ? invoice.getEnrollment().getCourse().getStartDate()
                 : LocalDate.now();
