@@ -18,9 +18,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-/**
- * US07 : Génère un certificat PDF avec Apache PDFBox.
- */
 @Slf4j
 @Service
 public class PdfGeneratorService {
@@ -28,9 +25,6 @@ public class PdfGeneratorService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    /**
-     * Génère un certificat PDF et retourne le chemin du fichier.
-     */
     public String generateCertificate(
             String studentName,
             String courseName,
