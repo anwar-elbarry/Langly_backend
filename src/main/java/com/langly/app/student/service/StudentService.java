@@ -10,7 +10,6 @@ public interface StudentService {
     StudentResponse getById(String id);
     StudentResponse getByUserId(String userId);
     List<StudentResponse> getAllBySchoolId(String schoolId);
-    /** US-AD-05 : etudiants dont CNIE, birthDate ou phoneNumber est manquant */
     List<StudentResponse> getIncompleteBySchoolId(String schoolId);
     StudentResponse updateByStudent(String userId, StudentUpdateRequest request);
     StudentResponse updateByAdmin(String studentId, AdminStudentUpdateRequest request);
