@@ -16,4 +16,6 @@ public interface PaymentScheduleRepository extends JpaRepository<PaymentSchedule
     List<PaymentSchedule> findAllByInvoiceIdOrderByInstallmentAsc(String invoiceId);
 
     List<PaymentSchedule> findAllByStatusAndDueDateBefore(InstallmentStatus status, LocalDate date);
+
+    List<PaymentSchedule> findAllByStatusAndDueDate(InstallmentStatus status, LocalDate date);
 }
