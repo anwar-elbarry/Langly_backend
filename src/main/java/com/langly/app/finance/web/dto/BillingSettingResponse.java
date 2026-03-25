@@ -16,4 +16,5 @@ public class BillingSettingResponse {
     private String defaultInstallmentPlan;
     private Boolean blockOnUnpaid;
     private Boolean discountEnabled;
+    private String currency;
 }

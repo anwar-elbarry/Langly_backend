@@ -27,4 +27,7 @@ public class BillingSettingRequest {
 
     @NotNull(message = "L'activation des réductions est obligatoire")
     private Boolean discountEnabled;
+
+    @NotNull(message = "La devise est obligatoire")
+    private String currency = "MAD";
 }

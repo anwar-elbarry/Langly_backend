@@ -15,4 +15,5 @@ public class FeeTemplateResponse {
     private BigDecimal amount;
     private Boolean isRecurring;
     private Boolean isActive;
+    private String schoolId;
 }
