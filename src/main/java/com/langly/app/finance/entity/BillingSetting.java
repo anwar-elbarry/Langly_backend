@@ -39,4 +39,7 @@ public class BillingSetting {
 
     @Column(nullable = false)
     private Boolean discountEnabled;
+
+    @Column(nullable = false)
+    private String currency = "MAD";
 }
