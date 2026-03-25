@@ -9,6 +9,8 @@ public interface FeeTemplateService {
 
     List<FeeTemplateResponse> getAllBySchoolId(String schoolId);
 
+    List<FeeTemplateResponse> getAllActiveBySchoolId(String schoolId);
+
     FeeTemplateResponse create(String schoolId, FeeTemplateRequest request);
 
     FeeTemplateResponse update(String feeTemplateId, FeeTemplateRequest request);
