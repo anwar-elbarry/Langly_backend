@@ -31,6 +31,12 @@ public class FeeTemplateServiceImpl implements FeeTemplateService {
     }
 
     @Override
+    public List<FeeTemplateResponse> getAllActiveBySchoolId(String schoolId) {
+        return feeTemplateRepository.findAllBySchoolIdAndIsActiveTrue(schoolId)
+                .stream().map(feeTemplateMapper::toResponse).toList();
+    }
+
+    @Override
     @Transactional
     public FeeTemplateResponse create(String schoolId, FeeTemplateRequest request) {
         School school = schoolRepository.findById(schoolId)
@@ -67,9 +73,9 @@ public class FeeTemplateServiceImpl implements FeeTemplateService {
     @Override
     @Transactional
     public void delete(String feeTemplateId) {
-        if (!feeTemplateRepository.existsById(feeTemplateId)) {
-            throw new ResourceNotFoundException("FeeTemplate", feeTemplateId);
-        }
-        feeTemplateRepository.deleteById(feeTemplateId);
+        FeeTemplate template = feeTemplateRepository.findById(feeTemplateId)
+                .orElseThrow(() -> new ResourceNotFoundException("FeeTemplate", feeTemplateId));
+        template.setIsActive(false);
+        feeTemplateRepository.save(template);
     }
 }
