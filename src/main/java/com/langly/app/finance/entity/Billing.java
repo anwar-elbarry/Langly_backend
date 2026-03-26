@@ -39,7 +39,7 @@ public class Billing {
 
     /** Lien vers l'inscription associée (US04) */
     @ManyToOne
-    @JoinColumn(name = "enrollment_id")
+    @JoinColumn(name = "enrollment_id", unique = true)
     private Enrollment enrollment;
 
     /** Identifiant Stripe PaymentIntent (US04) */
