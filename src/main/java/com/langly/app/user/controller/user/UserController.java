@@ -24,6 +24,8 @@ public interface UserController {
 
     ResponseEntity<List<UserResponse>> getAllByRole(String roleName);
 
+    ResponseEntity<List<UserResponse>> getAllBySchoolAndRole(String schoolId, String roleName);
+
     ResponseEntity<UserResponse> update(String id, UserUpdateRequest request);
 
     ResponseEntity<Void> delete(String id);

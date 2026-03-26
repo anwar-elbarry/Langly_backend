@@ -24,6 +24,8 @@ public interface UserService {
 
     List<UserResponse> getAllByRole(String roleName);
 
+    List<UserResponse> getAllBySchoolAndRole(String schoolId, String roleName);
+
         UserResponse update(String id, UserUpdateRequest request);
 
     void delete(String id);

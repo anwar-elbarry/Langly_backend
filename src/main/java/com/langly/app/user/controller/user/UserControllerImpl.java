@@ -101,6 +101,18 @@ public class UserControllerImpl implements UserController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Get users by school and role", description = "Retrieves all users of a given role in a specific school")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "School or role not found")
+    })
+    @GetMapping("/school/{schoolId}/role/{roleName}")
+    @Override
+    public ResponseEntity<List<UserResponse>> getAllBySchoolAndRole(@PathVariable String schoolId, @PathVariable String roleName) {
+        List<UserResponse> response = userService.getAllBySchoolAndRole(schoolId, roleName);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "Update user", description = "Updates an existing user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User updated successfully"),

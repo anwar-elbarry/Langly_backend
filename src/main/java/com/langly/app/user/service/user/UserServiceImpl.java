@@ -21,6 +21,7 @@ import com.langly.app.user.web.mapper.UserMapper;
 import com.langly.app.shared.util.FileStorageService;
 import com.langly.app.shared.util.PasswordGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,6 +46,8 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final PasswordGenerator passwordGenerator;
     private final FileStorageService fileStorageService;
+    @Value("${app.base-url}")
+    private String appBaseUrl;
 
     @Override
     public UserResponse create(UserRequest request) {
@@ -142,6 +145,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<UserResponse> getAllBySchoolAndRole(String schoolId, String roleName) {
+        if (!schoolRepository.existsById(schoolId)) {
+            throw new ResourceNotFoundException("School", schoolId);
+        }
+        return userRepository.findAllBySchoolIdAndRoleName(schoolId, roleName).stream()
+                .map(userMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public UserResponse update(String id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
@@ -217,7 +231,8 @@ public class UserServiceImpl implements UserService {
         String filename = fileStorageService.store(file);
         
         // Build the URL to serve the file
-        String fileUrl = "/api/v1/files/" + filename;
+        String base = appBaseUrl != null ? appBaseUrl.replaceAll("/$", "") : "";
+        String fileUrl = base + "/api/v1/files/" + filename;
         
         user.setProfile(fileUrl);
         User updatedUser = userRepository.save(user);
