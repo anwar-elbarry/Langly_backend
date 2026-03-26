@@ -1,14 +1,10 @@
 package com.langly.app.Authority.service.role;
 
-import com.langly.app.Authority.entity.Permission;
 import com.langly.app.Authority.exception.RoleNotFoundException;
-import com.langly.app.Authority.repository.PermissionRepository;
 import com.langly.app.Authority.web.dto.request.RoleRequest;
 import com.langly.app.Authority.web.dto.response.RoleResponse;
 import com.langly.app.Authority.web.mapper.RoleMapper;
 import com.langly.app.Authority.entity.Role;
-import com.langly.app.exception.AlreadyExistsException;
-import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.user.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +18,6 @@ import java.util.stream.Collectors;
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
-    private final PermissionRepository permissionRepository;
     private final RoleMapper roleMapper;
 
     @Override
@@ -70,41 +65,5 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findById(id)
                 .orElseThrow(() -> new RoleNotFoundException("Role not found with id: " + id));
         roleRepository.delete(role);
-    }
-
-    @Override
-    public RoleResponse assignPermissions(String roleId, List<String> permissionIds) {
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role", roleId));
-
-        permissionIds.forEach(permissionId -> {
-            Permission permission = permissionRepository.findById(permissionId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Permission", permissionId));
-
-            if (role.getPermissions().stream()
-                    .anyMatch(p -> p.getId().equals(permissionId))) {
-                throw new AlreadyExistsException(permission.getName());
-            }
-
-            role.getPermissions().add(permission);
-        });
-
-        Role updatedRole = roleRepository.save(role);
-        return roleMapper.toResponse(updatedRole);
-    }
-
-    @Override
-    public RoleResponse takePermission(String roleId, List<String> permissionIds) {
-        Role role = roleRepository.findById(roleId)
-                .orElseThrow(() -> new ResourceNotFoundException("Role", roleId));
-
-        permissionIds.forEach(permissionId -> {
-            Permission permission = permissionRepository.findById(permissionId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Permission", permissionId));
-
-            role.getPermissions().remove(permission);
-        });
-        Role saved = roleRepository.save(role);
-        return roleMapper.toResponse(saved);
     }
 }
