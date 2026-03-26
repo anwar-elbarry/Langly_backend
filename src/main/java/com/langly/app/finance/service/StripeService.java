@@ -84,8 +84,8 @@ public class StripeService {
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(
-                        frontendBaseUrl + "/admin/subscription?payment=success&session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl(frontendBaseUrl + "/admin/subscription?payment=cancelled")
+                        frontendBaseUrl + "/schoolAdmin/subscription?payment=success&session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl(frontendBaseUrl + "/schoolAdmin/subscription?payment=cancelled")
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setQuantity(1L)

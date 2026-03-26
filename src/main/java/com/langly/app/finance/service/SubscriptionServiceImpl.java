@@ -49,6 +49,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = subscriptionMapper.toEntity(request);
         subscription.setSchool(school);
         subscription.setStatus(PaymentStatus.PENDING);
+        subscription.setCurrency(normalizeCurrency(request.getCurrency()));
 
         LocalDate now = LocalDate.now();
         subscription.setCurrentPeriodStart(now);
@@ -88,19 +89,52 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = subscriptionRepository.findById(id)
                 .orElseThrow(() -> new SubscriptionNotFoundException("id", id));
 
-        subscriptionMapper.updateEntity(subscription, request);
+        boolean amountChanged = request.getAmount() != null && subscription.getAmount() != null
+                && request.getAmount().compareTo(subscription.getAmount()) != 0;
+        boolean currencyChanged = request.getCurrency() != null
+                && !normalizeCurrency(request.getCurrency()).equalsIgnoreCase(
+                        normalizeCurrency(subscription.getCurrency()));
+        boolean billingChanged = request.getBillingCycle() != null
+                && request.getBillingCycle() != subscription.getBillingCycle();
 
-        // Recalculate period dates if billing cycle changed
-        if (request.getBillingCycle() != null) {
-            LocalDate periodStart = subscription.getCurrentPeriodStart() != null
-                    ? subscription.getCurrentPeriodStart()
-                    : LocalDate.now();
-            subscription.setCurrentPeriodEnd(calculatePeriodEnd(periodStart, request.getBillingCycle()));
-            subscription.setNextPaymentDate(calculatePeriodEnd(periodStart, request.getBillingCycle()));
+        subscriptionMapper.updateEntity(subscription, request);
+        subscription.setCurrency(normalizeCurrency(subscription.getCurrency()));
+
+        // Policy: if current status is PAID, keep the current period and status;
+        // new terms apply from the next renewal without suspension.
+        if (subscription.getStatus() == PaymentStatus.PAID) {
+            // Ensure nextPaymentDate is set for the next renewal
+            if (subscription.getCurrentPeriodStart() == null) {
+                LocalDate start = LocalDate.now();
+                subscription.setCurrentPeriodStart(start);
+                LocalDate end = calculatePeriodEnd(start, subscription.getBillingCycle());
+                subscription.setCurrentPeriodEnd(end);
+                subscription.setNextPaymentDate(end);
+            } else if (subscription.getCurrentPeriodEnd() == null) {
+                LocalDate end = calculatePeriodEnd(subscription.getCurrentPeriodStart(), subscription.getBillingCycle());
+                subscription.setCurrentPeriodEnd(end);
+                subscription.setNextPaymentDate(end);
+            }
+        } else {
+            // For PENDING/OVERDUE/CANCELLED etc., apply changes immediately and reset period when billing cycle changes
+            if (billingChanged || subscription.getCurrentPeriodStart() == null) {
+                LocalDate start = LocalDate.now();
+                subscription.setCurrentPeriodStart(start);
+                LocalDate end = calculatePeriodEnd(start, subscription.getBillingCycle());
+                subscription.setCurrentPeriodEnd(end);
+                subscription.setNextPaymentDate(end);
+            }
         }
 
         Subscription updated = subscriptionRepository.save(subscription);
         return subscriptionMapper.toResponse(updated);
+    }
+
+    private String normalizeCurrency(String currency) {
+        String code = (currency == null || currency.isBlank()) ? "MAD" : currency.trim().toUpperCase();
+        // Map legacy/local shorthand DH to ISO 4217 MAD for Stripe compatibility
+        if (code.equals("DH")) code = "MAD";
+        return code;
     }
 
     @Override

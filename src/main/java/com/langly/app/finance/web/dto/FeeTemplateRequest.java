@@ -1,6 +1,5 @@
 package com.langly.app.finance.web.dto;
 
-import com.langly.app.finance.entity.enums.FeeType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,9 +14,6 @@ public class FeeTemplateRequest {
 
     @NotBlank(message = "Le nom du frais est obligatoire")
     private String name;
-
-    @NotNull(message = "Le type de frais est obligatoire")
-    private FeeType type;
 
     @NotNull(message = "Le montant est obligatoire")
     @DecimalMin(value = "0.01", message = "Le montant doit être supérieur à 0")

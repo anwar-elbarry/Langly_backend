@@ -45,7 +45,6 @@ public class FeeTemplateServiceImpl implements FeeTemplateService {
         FeeTemplate template = new FeeTemplate();
         template.setSchool(school);
         template.setName(request.getName());
-        template.setType(request.getType());
         template.setAmount(request.getAmount());
         template.setIsRecurring(request.getIsRecurring());
         template.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
@@ -60,7 +59,6 @@ public class FeeTemplateServiceImpl implements FeeTemplateService {
                 .orElseThrow(() -> new ResourceNotFoundException("FeeTemplate", feeTemplateId));
 
         template.setName(request.getName());
-        template.setType(request.getType());
         template.setAmount(request.getAmount());
         template.setIsRecurring(request.getIsRecurring());
         if (request.getIsActive() != null) {

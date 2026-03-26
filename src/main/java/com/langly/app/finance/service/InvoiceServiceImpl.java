@@ -5,7 +5,10 @@ import com.langly.app.course.entity.enums.EnrollmentStatus;
 import com.langly.app.course.repository.EnrollmentRepository;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.finance.entity.*;
-import com.langly.app.finance.entity.enums.*;
+import com.langly.app.finance.entity.enums.DiscountType;
+import com.langly.app.finance.entity.enums.InstallmentPlan;
+import com.langly.app.finance.entity.enums.InstallmentStatus;
+import com.langly.app.finance.entity.enums.InvoiceStatus;
 import com.langly.app.finance.repository.*;
 import com.langly.app.finance.web.dto.FinancialSummaryResponse;
 import com.langly.app.finance.web.dto.InvoiceResponse;
@@ -73,12 +76,9 @@ public class InvoiceServiceImpl implements InvoiceService {
             lines.add(tuitionLine);
         }
 
-        // 2. Active fee templates (REGISTRATION, PLACEMENT_TEST) for this school
+        // 2. Active fee templates for this school
         List<FeeTemplate> activeTemplates = feeTemplateRepository.findAllBySchoolIdAndIsActiveTrue(school.getId());
         for (FeeTemplate template : activeTemplates) {
-            // Skip TUITION type — we already use course.price
-            if (template.getType() == FeeType.TUITION) continue;
-
             InvoiceLine feeLine = new InvoiceLine();
             feeLine.setDescription(template.getName());
             feeLine.setAmount(template.getAmount());

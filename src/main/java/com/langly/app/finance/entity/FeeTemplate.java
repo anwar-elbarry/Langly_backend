@@ -1,6 +1,5 @@
 package com.langly.app.finance.entity;
 
-import com.langly.app.finance.entity.enums.FeeType;
 import com.langly.app.school.entity.School;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -26,10 +25,6 @@ public class FeeTemplate {
 
     @Column(nullable = false)
     private String name;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private FeeType type;
 
     @Column(nullable = false)
     private BigDecimal amount;
