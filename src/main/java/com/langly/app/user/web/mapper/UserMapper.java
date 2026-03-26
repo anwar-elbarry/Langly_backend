@@ -13,6 +13,7 @@ import org.mapstruct.ReportingPolicy;
 public interface UserMapper {
 
     @Mapping(target = "schoolId", source = "school.id")
+    @Mapping(target = "status", expression = "java(user.getStatus() == null ? com.langly.app.user.enums.UserStatus.ACTIVE : user.getStatus())")
     UserResponse toResponse(User user);
 
     @Mapping(target = "role.name", source = "roleName")
