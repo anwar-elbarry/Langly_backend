@@ -46,17 +46,6 @@ public class SchoolController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Get school by subdomain")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "School found"),
-            @ApiResponse(responseCode = "404", description = "School not found")
-    })
-    @GetMapping("/subdomain/{subDomain}")
-    public ResponseEntity<SchoolResponse> getBySubDomain(@PathVariable String subDomain) {
-        SchoolResponse response = schoolService.getBySubDomain(subDomain);
-        return ResponseEntity.ok(response);
-    }
-
     @Operation(summary = "Search schools by name")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Schools found")

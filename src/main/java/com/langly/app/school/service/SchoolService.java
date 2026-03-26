@@ -12,8 +12,6 @@ public interface SchoolService {
 
     SchoolResponse getById(String id);
 
-    SchoolResponse getBySubDomain(String subDomain);
-
     List<SchoolResponse> getByName(String name);
 
     List<SchoolResponse> getAll();

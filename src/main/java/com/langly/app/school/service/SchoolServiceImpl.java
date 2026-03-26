@@ -55,13 +55,6 @@ public class SchoolServiceImpl implements SchoolService {
     }
 
     @Override
-    public SchoolResponse getBySubDomain(String subDomain) {
-        School school = schoolRepository.findBySubDomain(subDomain)
-                .orElseThrow(() -> new SchoolNotFoundException("subDomain", subDomain));
-        return schoolMapper.toResponse(school);
-    }
-
-    @Override
     public List<SchoolResponse> getByName(String name) {
         return schoolRepository.findByName(name)
                 .stream()

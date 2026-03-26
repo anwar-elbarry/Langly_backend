@@ -1,7 +1,6 @@
 package com.langly.app.school.web.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,10 +13,7 @@ public class SchoolRequest {
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
     private String name;
 
-    @Size(min = 3, max = 50, message = "Subdomain must be between 3 and 50 characters")
-    @Pattern(regexp = "^[a-z0-9-]+$", message = "Subdomain can only contain lowercase letters, numbers, and hyphens")
-    private String subDomain;
-
+    @Size(max = 2048, message = "Logo URL must not exceed 2048 characters")
     private String logo;
 
     @NotBlank(message = "City is required")
@@ -27,6 +23,6 @@ public class SchoolRequest {
     @NotBlank(message = "Country is required")
     private String country;
 
-    @Size(max = 255, message = "Address must not exceed 255 characters")
+    @Size(max = 1024, message = "Address must not exceed 1024 characters")
     private String address;
 }
