@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -77,6 +78,20 @@ public class SchoolController {
             @PathVariable String id,
             @Valid @RequestBody SchoolUpdateRequest request) {
         SchoolResponse response = schoolService.update(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Upload school logo")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Logo uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file"),
+            @ApiResponse(responseCode = "404", description = "School not found")
+    })
+    @PostMapping(value = "/{id}/logo", consumes = "multipart/form-data")
+    public ResponseEntity<SchoolResponse> uploadLogo(
+            @PathVariable String id,
+            @RequestParam("file") MultipartFile file) {
+        SchoolResponse response = schoolService.uploadLogo(id, file);
         return ResponseEntity.ok(response);
     }
 

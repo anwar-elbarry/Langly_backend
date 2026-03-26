@@ -12,6 +12,7 @@ import com.langly.security.jwt.JwtService;
 import com.langly.security.service.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,6 +41,9 @@ public class AuthServiceImpl implements AuthService {
                     )
             );
         } catch (org.springframework.security.core.AuthenticationException e) {
+            if (e instanceof DisabledException) {
+                throw new AuthenticationException("Your account is suspended. Contact Langly SaaS team.");
+            }
             throw new AuthenticationException("Invalid email or password");
         }
 

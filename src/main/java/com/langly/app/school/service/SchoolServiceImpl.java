@@ -11,9 +11,12 @@ import com.langly.app.school.web.dto.SchoolRequest;
 import com.langly.app.school.web.dto.SchoolResponse;
 import com.langly.app.school.web.dto.SchoolUpdateRequest;
 import com.langly.app.school.web.mapper.SchoolMapper;
+import com.langly.app.shared.util.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,6 +29,9 @@ public class SchoolServiceImpl implements SchoolService {
     private final SchoolRepository schoolRepository;
     private final SchoolMapper schoolMapper;
     private final BillingSettingRepository billingSettingRepository;
+    private final FileStorageService fileStorageService;
+    @Value("${app.base-url}")
+    private String appBaseUrl;
 
     @Override
     @Transactional
@@ -76,6 +82,21 @@ public class SchoolServiceImpl implements SchoolService {
         School school = schoolRepository.findById(id)
                 .orElseThrow(() -> new SchoolNotFoundException("id", id));
         schoolMapper.updateEntity(school, request);
+        School updatedSchool = schoolRepository.save(school);
+        return schoolMapper.toResponse(updatedSchool);
+    }
+
+    @Override
+    @Transactional
+    public SchoolResponse uploadLogo(String id, MultipartFile file) {
+        School school = schoolRepository.findById(id)
+                .orElseThrow(() -> new SchoolNotFoundException("id", id));
+
+        String filename = fileStorageService.store(file);
+        String base = appBaseUrl != null ? appBaseUrl.replaceAll("/$", "") : "";
+        String fileUrl = base + "/api/v1/files/" + filename;
+
+        school.setLogo(fileUrl);
         School updatedSchool = schoolRepository.save(school);
         return schoolMapper.toResponse(updatedSchool);
     }

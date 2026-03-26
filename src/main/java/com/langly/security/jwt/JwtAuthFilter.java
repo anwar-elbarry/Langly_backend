@@ -84,6 +84,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     return;
                 }
 
+                if (!userDetails.isEnabled()) {
+                    sendErrorResponse(response, "Your account is suspended. Contact Langly SaaS team.", HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
+
                 // Extract role from claims and create authorities
                 Collection<? extends GrantedAuthority> authorities = extractAuthorities(claims);
 
@@ -108,7 +113,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private void sendErrorResponse(HttpServletResponse response, String message, int status) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\":\"" + message + "\"}");
+        String safeMessage = message.replace("\"", "\\\\\"");
+        response.getWriter().write("{\"status\":" + status + ",\"message\":\"" + safeMessage + "\"}");
         response.getWriter().flush();
     }
 

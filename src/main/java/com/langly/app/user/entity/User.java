@@ -34,6 +34,8 @@ public class User implements UserDetails {
     @Column(unique = true,nullable = false)
     private String phoneNumber;
     private String profile;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private UserStatus status;
 
     @ManyToOne
@@ -79,6 +81,13 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return this.status.equals(UserStatus.ACTIVE);
+        return UserStatus.ACTIVE.equals(this.status);
+    }
+
+    @PrePersist
+    private void applyDefaults() {
+        if (this.status == null) {
+            this.status = UserStatus.ACTIVE;
+        }
     }
 }
