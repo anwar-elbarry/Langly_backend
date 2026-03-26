@@ -160,11 +160,11 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         Enrollment saved = enrollmentRepository.save(enrollment);
 
         // Generate invoice for this enrollment
-        invoiceService.generateInvoice(enrollmentId, discountIds);
+        var invoiceResponse = invoiceService.generateInvoice(enrollmentId, discountIds);
 
         // Create Billing record so student can select payment method
         Billing billing = new Billing();
-        billing.setPrice(enrollment.getCourse().getPrice());
+        billing.setPrice(invoiceResponse.getTotal());
         billing.setStatus(PaymentStatus.PENDING);
         billing.setEnrollment(saved);
         billing.setStudent(enrollment.getStudent());
