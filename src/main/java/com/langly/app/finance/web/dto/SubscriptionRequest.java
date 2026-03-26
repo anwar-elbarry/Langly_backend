@@ -20,7 +20,6 @@ public class SubscriptionRequest {
     @Positive(message = "Amount must be positive")
     private BigDecimal amount;
 
-    @NotBlank(message = "Currency is required")
     private String currency;
 
     @NotNull(message = "Billing cycle is required")

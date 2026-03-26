@@ -15,7 +15,6 @@ public class StudentFeeStatusResponse {
 
     private String feeTemplateId;
     private String feeTemplateName;
-    private String feeType;
     private BigDecimal feeAmount;
     private Boolean isRecurring;
     private BigDecimal totalPaid;
