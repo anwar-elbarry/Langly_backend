@@ -9,7 +9,6 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface FeeTemplateMapper {
 
-    @Mapping(target = "type", expression = "java(feeTemplate.getType() != null ? feeTemplate.getType().name() : null)")
     @Mapping(target = "schoolId", source = "school.id")
     FeeTemplateResponse toResponse(FeeTemplate feeTemplate);
 }
