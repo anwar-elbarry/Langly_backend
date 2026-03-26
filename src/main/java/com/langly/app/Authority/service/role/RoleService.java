@@ -12,6 +12,4 @@ public interface RoleService {
     List<RoleResponse> getAll();
     RoleResponse update(String id, RoleRequest request);
     void delete(String id);
-    RoleResponse assignPermissions(String roleId,List<String> permissionId);
-    RoleResponse takePermission(String roleId,List<String> permissionId);
 }

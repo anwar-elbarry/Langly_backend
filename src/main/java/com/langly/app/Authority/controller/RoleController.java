@@ -57,20 +57,4 @@ public class RoleController {
         roleService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
-    @PostMapping("/{roleId}/permissions")
-    public ResponseEntity<RoleResponse> assignPermissions(
-            @PathVariable String roleId,
-            @RequestBody List<String> permissionIds) {
-        RoleResponse response = roleService.assignPermissions(roleId, permissionIds);
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/{roleId}/permissions")
-    public ResponseEntity<RoleResponse> takePermissions(
-            @PathVariable String roleId,
-            @RequestBody List<String> permissionIds) {
-        RoleResponse response = roleService.takePermission(roleId, permissionIds);
-        return ResponseEntity.ok(response);
-    }
 }

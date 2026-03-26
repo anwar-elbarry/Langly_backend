@@ -271,8 +271,14 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw new IllegalStateException("Impossible de créer un plan pour une facture déjà payée");
         }
 
-        // Delete existing schedules
+        // Block plan changes if any installment is already paid
         List<PaymentSchedule> existing = paymentScheduleRepository.findAllByInvoiceId(invoiceId);
+        boolean hasPaidInstallments = existing.stream()
+                .anyMatch(s -> s.getStatus() == InstallmentStatus.PAID);
+        if (hasPaidInstallments) {
+            throw new IllegalStateException("Impossible de modifier le plan : des échéances sont déjà payées");
+        }
+
         paymentScheduleRepository.deleteAll(existing);
 
         BigDecimal total = invoice.getTotal();
@@ -294,12 +300,11 @@ public class InvoiceServiceImpl implements InvoiceService {
                 schedules.add(createScheduleEntry(invoice, 2, remainder, courseStart.plusWeeks(4)));
             }
             case THREE_PARTS -> {
-                BigDecimal first = total.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
-                BigDecimal quarter = total.subtract(first).divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
-                BigDecimal last = total.subtract(first).subtract(quarter);
-                schedules.add(createScheduleEntry(invoice, 1, first, courseStart));
-                schedules.add(createScheduleEntry(invoice, 2, quarter, courseStart.plusWeeks(4)));
-                schedules.add(createScheduleEntry(invoice, 3, last, courseStart.plusWeeks(8)));
+                BigDecimal third = total.divide(BigDecimal.valueOf(3), 2, RoundingMode.HALF_UP);
+                BigDecimal remainder = total.subtract(third).subtract(third);
+                schedules.add(createScheduleEntry(invoice, 1, third, courseStart));
+                schedules.add(createScheduleEntry(invoice, 2, third, courseStart.plusWeeks(4)));
+                schedules.add(createScheduleEntry(invoice, 3, remainder, courseStart.plusWeeks(8)));
             }
         }
 
@@ -341,17 +346,15 @@ public class InvoiceServiceImpl implements InvoiceService {
             }
         }
 
-        // Compute TVA on-the-fly for overview display
-        BigDecimal divisor = BigDecimal.ONE.add(tvaRate.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP));
-        BigDecimal totalHt = totalRevenue.divide(divisor, 2, RoundingMode.HALF_UP);
-        BigDecimal totalTva = totalRevenue.subtract(totalHt);
-        BigDecimal paidHt = paidRevenue.divide(divisor, 2, RoundingMode.HALF_UP);
-        BigDecimal paidTva = paidRevenue.subtract(paidHt);
-        BigDecimal pendingHt = pendingRevenue.divide(divisor, 2, RoundingMode.HALF_UP);
-        BigDecimal pendingTva = pendingRevenue.subtract(pendingHt);
+        // TVA is not included in invoice totals — compute it as an additive tax
+        BigDecimal tvaMultiplier = tvaRate.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP);
+        BigDecimal totalTva = totalRevenue.multiply(tvaMultiplier).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalTtc = totalRevenue.add(totalTva);
+        BigDecimal paidTva = paidRevenue.multiply(tvaMultiplier).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal pendingTva = pendingRevenue.multiply(tvaMultiplier).setScale(2, RoundingMode.HALF_UP);
 
         return new FinancialSummaryResponse(
-                totalRevenue, totalTva, totalRevenue,
+                totalRevenue, totalTva, totalTtc,
                 paidRevenue, paidTva,
                 pendingRevenue, pendingTva,
                 invoices.size(), paidCount, unpaidCount,

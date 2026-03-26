@@ -46,6 +46,15 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         School school = schoolRepository.findById(request.getSchoolId())
                 .orElseThrow(() -> new SchoolNotFoundException("id", request.getSchoolId()));
 
+        // Prevent duplicate active subscriptions for the same school
+        boolean hasActive = subscriptionRepository.existsBySchoolIdAndStatusIn(
+                request.getSchoolId(),
+                java.util.List.of(PaymentStatus.PAID, PaymentStatus.PENDING, PaymentStatus.PENDING_TRANSFER)
+        );
+        if (hasActive) {
+            throw new IllegalStateException("Cette école possède déjà un abonnement actif ou en attente");
+        }
+
         Subscription subscription = subscriptionMapper.toEntity(request);
         subscription.setSchool(school);
         subscription.setStatus(PaymentStatus.PENDING);

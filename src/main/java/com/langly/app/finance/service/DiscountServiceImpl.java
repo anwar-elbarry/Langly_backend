@@ -9,6 +9,7 @@ import com.langly.app.finance.web.mapper.DiscountMapper;
 import com.langly.app.school.entity.School;
 import com.langly.app.school.repository.SchoolRepository;
 import com.langly.app.school.exception.SchoolNotFoundException;
+import com.langly.app.finance.entity.enums.DiscountType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,8 @@ public class DiscountServiceImpl implements DiscountService {
         School school = schoolRepository.findById(schoolId)
                 .orElseThrow(() -> new SchoolNotFoundException("id", schoolId));
 
+        validateDiscountValue(request.getType(), request.getValue());
+
         Discount discount = new Discount();
         discount.setSchool(school);
         discount.setName(request.getName());
@@ -51,6 +54,8 @@ public class DiscountServiceImpl implements DiscountService {
     public DiscountResponse update(String discountId, DiscountRequest request) {
         Discount discount = discountRepository.findById(discountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Discount", discountId));
+
+        validateDiscountValue(request.getType(), request.getValue());
 
         discount.setName(request.getName());
         discount.setType(request.getType());
@@ -69,5 +74,11 @@ public class DiscountServiceImpl implements DiscountService {
             throw new ResourceNotFoundException("Discount", discountId);
         }
         discountRepository.deleteById(discountId);
+    }
+
+    private void validateDiscountValue(DiscountType type, java.math.BigDecimal value) {
+        if (type == DiscountType.PERCENTAGE && (value.compareTo(java.math.BigDecimal.ZERO) < 0 || value.compareTo(java.math.BigDecimal.valueOf(100)) > 0)) {
+            throw new IllegalArgumentException("Le pourcentage de remise doit être entre 0 et 100");
+        }
     }
 }
