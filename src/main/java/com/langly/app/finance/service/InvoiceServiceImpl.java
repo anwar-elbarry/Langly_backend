@@ -5,7 +5,10 @@ import com.langly.app.course.entity.enums.EnrollmentStatus;
 import com.langly.app.course.repository.EnrollmentRepository;
 import com.langly.app.exception.ResourceNotFoundException;
 import com.langly.app.finance.entity.*;
-import com.langly.app.finance.entity.enums.*;
+import com.langly.app.finance.entity.enums.DiscountType;
+import com.langly.app.finance.entity.enums.InstallmentPlan;
+import com.langly.app.finance.entity.enums.InstallmentStatus;
+import com.langly.app.finance.entity.enums.InvoiceStatus;
 import com.langly.app.finance.repository.*;
 import com.langly.app.finance.web.dto.FinancialSummaryResponse;
 import com.langly.app.finance.web.dto.InvoiceResponse;
@@ -58,7 +61,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         // Fetch billing settings (use defaults if none exist)
         BillingSetting settings = billingSettingRepository.findBySchoolId(school.getId())
                 .orElse(null);
-        BigDecimal tvaRate = settings != null ? settings.getTvaRate() : BigDecimal.valueOf(20);
         int dueDateDays = settings != null ? settings.getDueDateDays() : 0;
 
         // Build invoice lines
@@ -73,12 +75,9 @@ public class InvoiceServiceImpl implements InvoiceService {
             lines.add(tuitionLine);
         }
 
-        // 2. Active fee templates (REGISTRATION, PLACEMENT_TEST) for this school
+        // 2. Active fee templates for this school
         List<FeeTemplate> activeTemplates = feeTemplateRepository.findAllBySchoolIdAndIsActiveTrue(school.getId());
         for (FeeTemplate template : activeTemplates) {
-            // Skip TUITION type — we already use course.price
-            if (template.getType() == FeeType.TUITION) continue;
-
             InvoiceLine feeLine = new InvoiceLine();
             feeLine.setDescription(template.getName());
             feeLine.setAmount(template.getAmount());
@@ -111,18 +110,13 @@ public class InvoiceServiceImpl implements InvoiceService {
             }
         }
 
-        // Compute totals — prices are TTC (tax-inclusive)
-        BigDecimal totalTtc = lines.stream()
+        // Compute total — sum of all line items (price = what student pays)
+        BigDecimal total = lines.stream()
                 .map(InvoiceLine::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        if (totalTtc.compareTo(BigDecimal.ZERO) < 0) {
-            totalTtc = BigDecimal.ZERO;
+        if (total.compareTo(BigDecimal.ZERO) < 0) {
+            total = BigDecimal.ZERO;
         }
-
-        // Extract HT from TTC: subtotal = totalTtc / (1 + tvaRate/100)
-        BigDecimal divisor = BigDecimal.ONE.add(tvaRate.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP));
-        BigDecimal subtotal = totalTtc.divide(divisor, 2, RoundingMode.HALF_UP);
-        BigDecimal tvaAmount = totalTtc.subtract(subtotal);
 
         // Compute due date
         LocalDate courseStart = enrollment.getCourse().getStartDate();
@@ -137,10 +131,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setStudent(enrollment.getStudent());
         invoice.setSchool(school);
         invoice.setEnrollment(enrollment);
-        invoice.setSubtotal(subtotal);
-        invoice.setTvaRate(tvaRate);
-        invoice.setTvaAmount(tvaAmount);
-        invoice.setTotalTtc(totalTtc);
+        invoice.setTotal(total);
         invoice.setStatus(InvoiceStatus.UNPAID);
         invoice.setDueDate(dueDate);
 
@@ -153,10 +144,10 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceLineRepository.saveAll(lines);
         savedInvoice.setLines(lines);
 
-        // Send notification to student (show TTC amount — what they actually pay)
+        // Send notification to student
         try {
             String userId = enrollment.getStudent().getUser().getId();
-            String formattedTotal = totalTtc.setScale(2, RoundingMode.HALF_UP).toPlainString();
+            String formattedTotal = total.setScale(2, RoundingMode.HALF_UP).toPlainString();
             notificationService.sendNotification(
                     userId,
                     "Nouvelle facture : " + invoiceNumber,
@@ -169,8 +160,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             log.warn("Impossible d'envoyer la notification pour la facture {}", savedInvoice.getId(), e);
         }
 
-        log.info("Invoice {} generated for enrollment {} — Total TTC: {} MAD",
-                invoiceNumber, enrollmentId, totalTtc);
+        log.info("Invoice {} generated for enrollment {} — Total: {} MAD",
+                invoiceNumber, enrollmentId, total);
 
         return invoiceMapper.toResponse(savedInvoice);
     }
@@ -235,8 +226,8 @@ public class InvoiceServiceImpl implements InvoiceService {
             totalPaid = paymentAmount;
         }
 
-        // Update invoice status — student pays totalTtc (the full price set by admin)
-        if (totalPaid.compareTo(invoice.getTotalTtc()) >= 0) {
+        // Update invoice status
+        if (totalPaid.compareTo(invoice.getTotal()) >= 0) {
             invoice.setStatus(InvoiceStatus.PAID);
 
             // Transition enrollment APPROVED → IN_PROGRESS
@@ -284,8 +275,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         List<PaymentSchedule> existing = paymentScheduleRepository.findAllByInvoiceId(invoiceId);
         paymentScheduleRepository.deleteAll(existing);
 
-        // Student pays totalTtc (the full price set by admin, tax-inclusive)
-        BigDecimal total = invoice.getTotalTtc();
+        BigDecimal total = invoice.getTotal();
         LocalDate courseStart = invoice.getEnrollment() != null && invoice.getEnrollment().getCourse() != null
                 ? invoice.getEnrollment().getCourse().getStartDate()
                 : LocalDate.now();
@@ -328,39 +318,40 @@ public class InvoiceServiceImpl implements InvoiceService {
         List<Invoice> invoices = invoiceRepository.findAllBySchoolId(schoolId);
 
         BigDecimal totalRevenue = BigDecimal.ZERO;
-        BigDecimal totalTva = BigDecimal.ZERO;
         BigDecimal paidRevenue = BigDecimal.ZERO;
-        BigDecimal paidTva = BigDecimal.ZERO;
         BigDecimal pendingRevenue = BigDecimal.ZERO;
-        BigDecimal pendingTva = BigDecimal.ZERO;
         long paidCount = 0;
         long unpaidCount = 0;
-        BigDecimal tvaRate = BigDecimal.valueOf(20);
 
+        BigDecimal tvaRate = BigDecimal.valueOf(20);
         BillingSetting settings = billingSettingRepository.findBySchoolId(schoolId).orElse(null);
         if (settings != null) {
             tvaRate = settings.getTvaRate();
         }
 
         for (Invoice inv : invoices) {
-            totalRevenue = totalRevenue.add(inv.getSubtotal());
-            totalTva = totalTva.add(inv.getTvaAmount());
+            totalRevenue = totalRevenue.add(inv.getTotal());
 
             if (inv.getStatus() == InvoiceStatus.PAID) {
-                paidRevenue = paidRevenue.add(inv.getSubtotal());
-                paidTva = paidTva.add(inv.getTvaAmount());
+                paidRevenue = paidRevenue.add(inv.getTotal());
                 paidCount++;
             } else {
-                pendingRevenue = pendingRevenue.add(inv.getSubtotal());
-                pendingTva = pendingTva.add(inv.getTvaAmount());
+                pendingRevenue = pendingRevenue.add(inv.getTotal());
                 unpaidCount++;
             }
         }
 
-        BigDecimal totalTtc = totalRevenue.add(totalTva);
+        // Compute TVA on-the-fly for overview display
+        BigDecimal divisor = BigDecimal.ONE.add(tvaRate.divide(BigDecimal.valueOf(100), 6, RoundingMode.HALF_UP));
+        BigDecimal totalHt = totalRevenue.divide(divisor, 2, RoundingMode.HALF_UP);
+        BigDecimal totalTva = totalRevenue.subtract(totalHt);
+        BigDecimal paidHt = paidRevenue.divide(divisor, 2, RoundingMode.HALF_UP);
+        BigDecimal paidTva = paidRevenue.subtract(paidHt);
+        BigDecimal pendingHt = pendingRevenue.divide(divisor, 2, RoundingMode.HALF_UP);
+        BigDecimal pendingTva = pendingRevenue.subtract(pendingHt);
 
         return new FinancialSummaryResponse(
-                totalRevenue, totalTva, totalTtc,
+                totalRevenue, totalTva, totalRevenue,
                 paidRevenue, paidTva,
                 pendingRevenue, pendingTva,
                 invoices.size(), paidCount, unpaidCount,

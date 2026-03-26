@@ -20,11 +20,12 @@ public class School {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String name;
-    private String subDomain;
+    @Column(columnDefinition = "TEXT")
     private String logo;
+    @Column(columnDefinition = "TEXT")
+    private String address;
     private String city;
     private String country;
-    private String address;
     private SchoolStatus status;
 
     @OneToMany(mappedBy = "school",cascade = {CascadeType.PERSIST,CascadeType.MERGE})

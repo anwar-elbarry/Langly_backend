@@ -42,16 +42,7 @@ public class Invoice {
     private Enrollment enrollment;
 
     @Column(nullable = false)
-    private BigDecimal subtotal;
-
-    @Column(nullable = false)
-    private BigDecimal tvaRate;
-
-    @Column(nullable = false)
-    private BigDecimal tvaAmount;
-
-    @Column(nullable = false)
-    private BigDecimal totalTtc;
+    private BigDecimal total;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

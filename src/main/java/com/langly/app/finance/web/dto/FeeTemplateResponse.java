@@ -11,7 +11,6 @@ public class FeeTemplateResponse {
 
     private String id;
     private String name;
-    private String type;
     private BigDecimal amount;
     private Boolean isRecurring;
     private Boolean isActive;

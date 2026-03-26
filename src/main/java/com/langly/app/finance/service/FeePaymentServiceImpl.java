@@ -102,7 +102,6 @@ public class FeePaymentServiceImpl implements FeePaymentService {
             StudentFeeStatusResponse response = new StudentFeeStatusResponse(
                     template.getId(),
                     template.getName(),
-                    template.getType() != null ? template.getType().name() : null,
                     template.getAmount(),
                     template.getIsRecurring(),
                     totalPaid,

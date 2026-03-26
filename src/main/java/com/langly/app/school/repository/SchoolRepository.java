@@ -10,9 +10,5 @@ import java.util.Optional;
 @Repository
 public interface SchoolRepository extends JpaRepository<School, String> {
 
-    Optional<School> findBySubDomain(String subDomain);
-
     List<School> findByName(String name);
-
-    boolean existsBySubDomain(String subDomain);
 }

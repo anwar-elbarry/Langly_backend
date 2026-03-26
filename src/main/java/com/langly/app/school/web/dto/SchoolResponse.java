@@ -8,7 +8,6 @@ import lombok.Setter;
 public class SchoolResponse {
     private String id;
     private String name;
-    private String subDomain;
     private String logo;
     private String city;
     private String country;
