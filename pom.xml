@@ -131,7 +131,6 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- Flyway pour la gestion des migrations de base de données -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -158,14 +157,12 @@
             <version>LATEST</version>
         </dependency>
 
-        <!-- Stripe SDK for US04 (Student Enrollment with Payment) -->
         <dependency>
             <groupId>com.stripe</groupId>
             <artifactId>stripe-java</artifactId>
             <version>28.3.0</version>
         </dependency>
 
-        <!-- Apache PDFBox for US07 (PDF Certificate Generation) -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
             <artifactId>pdfbox</artifactId>
