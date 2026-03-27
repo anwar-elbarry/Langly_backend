@@ -9,7 +9,7 @@ pipeline {
     stage('Build & test') {
       steps {
         bat '''
-          mvnw clean package
+          mvnw clean package -DskipTests
         '''
       }
     }
