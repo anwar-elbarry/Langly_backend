@@ -30,25 +30,19 @@ public class Billing {
     private PaymentStatus status;
     private LocalDate nextBillDate;
 
-    /** Méthode de paiement utilisée lors de la confirmation manuelle (CASH ou BANK_TRANSFER) */
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    /** Date de paiement, renseignée lors de la confirmation par l'admin */
     private LocalDateTime paidAt;
 
-    /** Lien vers l'inscription associée (US04) */
     @ManyToOne
     @JoinColumn(name = "enrollment_id", unique = true)
     private Enrollment enrollment;
 
-    /** Identifiant Stripe PaymentIntent (US04) */
     private String stripePaymentIntentId;
 
-    /** Identifiant Stripe Checkout Session (US04) */
     private String stripeCheckoutSessionId;
 
-    /** URL de la facture PDF générée (US04) */
     private String invoicePdfUrl;
 
     @ManyToOne
