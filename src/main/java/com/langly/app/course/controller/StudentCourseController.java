@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/**
- * US03 : Endpoints dédiés à l'étudiant pour consulter ses cours.
- */
+
 @RestController
 @RequestMapping("/api/v1/student/courses")
 @RequiredArgsConstructor

@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * US05 : Le professeur génère un QR code et consulte la présence.
- */
+
 @RestController
 @RequestMapping("/api/v1/teacher/sessions")
 @RequiredArgsConstructor

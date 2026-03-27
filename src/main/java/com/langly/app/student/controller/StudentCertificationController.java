@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * US07 : L'étudiant consulte et télécharge ses certificats.
- */
 @RestController
 @RequestMapping("/api/v1/student/certifications")
 @RequiredArgsConstructor

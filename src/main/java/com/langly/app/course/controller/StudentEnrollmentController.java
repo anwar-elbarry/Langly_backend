@@ -22,10 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Student-facing enrollment endpoints.
- * Students request enrollment → admin approves → student pays.
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/student/enrollments")

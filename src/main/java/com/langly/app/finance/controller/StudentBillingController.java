@@ -28,10 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Student-facing billing endpoints.
- * After admin approves enrollment, student selects payment method here.
- */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/student/billings")

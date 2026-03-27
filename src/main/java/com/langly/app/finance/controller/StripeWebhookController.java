@@ -32,11 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * US04 : Webhook Stripe pour confirmer le paiement.
- * Endpoint public (pas d'auth JWT) — la sécurité est assurée par la signature
- * Stripe.
- */
+
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/webhooks")

@@ -25,10 +25,7 @@ public class EmailService {
         this.mailEnabled = mailEnabled;
     }
 
-    /**
-     * V1 — sends the real email via Resend (requires a verified domain).
-     * Returns null when mail is enabled (fire-and-forget via @Async).
-     */
+
     @Async
     public void sendInvitationEmail(String to, String name, String role, String email, String password, String schoolName) {
         String loginLink = baseUrl + "/login";
@@ -47,11 +44,7 @@ public class EmailService {
         }
     }
 
-    /**
-     * V2 — when mail is disabled (dev mode), skips Resend and returns a plain
-     * EmailPreview so the caller can include it in the API response for front-end preview.
-     * When mail is enabled, sends the real email and returns null.
-     */
+
     public EmailPreview sendInvitationEmailWithPreview(String to, String name, String role,
                                                        String email, String password, String schoolName) {
         String loginLink = baseUrl + "/login";
@@ -70,7 +63,6 @@ public class EmailService {
                     .build();
         }
 
-        // mail enabled → send for real and return null (no preview needed)
         sendInvitationEmail(to, name, role, email, password, schoolName);
         return null;
     }

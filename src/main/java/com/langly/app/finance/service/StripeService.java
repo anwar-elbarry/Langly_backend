@@ -14,9 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-/**
- * US04 : Service d'intégration Stripe (Checkout Session + Webhook).
- */
+
 @Slf4j
 @Service
 public class StripeService {
@@ -38,9 +36,7 @@ public class StripeService {
         Stripe.apiKey = apiKey;
     }
 
-    /**
-     * Crée une session Stripe Checkout pour le paiement d'un cours.
-     */
+
     public Session createCheckoutSession(Course course, Billing billing) throws StripeException {
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)

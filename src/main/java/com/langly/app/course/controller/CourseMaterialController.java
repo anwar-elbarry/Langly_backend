@@ -15,9 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-/**
- * US06 : Upload, liste et téléchargement de matériels de cours (PDF, vidéos).
- */
+
 @RestController
 @RequestMapping("/api/v1/courses/{courseId}/materials")
 @RequiredArgsConstructor

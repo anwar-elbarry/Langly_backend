@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * US05 : L'étudiant scanne un QR code pour marquer sa présence et consulte ses stats.
- */
+
 @RestController
 @RequestMapping("/api/v1/student/attendance")
 @RequiredArgsConstructor
