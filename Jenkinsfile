@@ -30,7 +30,7 @@ pipeline {
             echo UPLOAD_DIR=%UPLOAD_DIR%
           )
 
-          mvnw clean package -DskipTests
+          mvnw clean package 
         '''
       }
     }
